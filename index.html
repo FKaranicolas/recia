@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RECIA · AI Document Processing</title>
+<meta name="theme-color" content="#F6F7F5">
+<meta name="description" content="Sacá una foto de tu factura y la IA extrae los datos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="rail">
+    <a class="brand" href="#/dashboard">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 3.5h8.5L19 8v12.5H6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3.5V8h5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand-text">
+        <strong>RECIA</strong>
+        <small>AI Document Processing</small>
+      </span>
+    </a>
+
+    <nav class="rail-nav" aria-label="Secciones">
+      <a href="#/dashboard" data-nav="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 8h6V4h-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Resumen</span>
+      </a>
+      <a href="#/comprobantes" data-nav="comprobantes">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14v16l-2.3-1.6L14.4 20l-2.4-1.6L9.6 20l-2.3-1.6L5 20z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 9h6M9 13h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>Comprobantes</span>
+      </a>
+      <a href="#/nuevo" data-nav="nuevo">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
+        <span>Nuevo</span>
+      </a>
+    </nav>
+
+    <div class="rail-foot">
+      <p class="rail-note">Demo con datos ficticios. La IA y la base de datos están simuladas en este dispositivo.</p>
+      <p class="rail-storage" id="storageBadge"></p>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <section class="view" data-view="dashboard" hidden></section>
+    <section class="view" data-view="nuevo" hidden></section>
+    <section class="view" data-view="comprobantes" hidden></section>
+  </main>
+
+</div>
+
+<nav class="tabbar" aria-label="Navegación principal">
+  <a href="#/dashboard" data-nav="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 8h6V4h-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <span>Resumen</span>
+  </a>
+  <a href="#/nuevo" class="tab-capture" data-nav="nuevo" aria-label="Nuevo comprobante">
+    <span class="tab-capture-btn">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.2" stroke="currentColor" stroke-width="1.7"/></svg>
+    </span>
+  </a>
+  <a href="#/comprobantes" data-nav="comprobantes">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14v16l-2.3-1.6L14.4 20l-2.4-1.6L9.6 20l-2.3-1.6L5 20z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 9h6M9 13h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <span>Comprobantes</span>
+  </a>
+</nav>
+
+<div id="modalRoot"></div>
+<div id="toastRoot" class="toast-root" role="status" aria-live="polite"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/receipts.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
