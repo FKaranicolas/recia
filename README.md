@@ -21,6 +21,8 @@ La demo esta implementada con HTML, CSS y JavaScript vanilla. Permite:
 
 La extraccion de `js/ai.js` no analiza el archivo: genera valores aleatorios. Los comprobantes se guardan en `localStorage` y, cuando no esta disponible, en memoria volatil.
 
+El snapshot de esta demo se preserva en el tag inmutable `prototype-v0.1.0`. Desde M1, la raiz de `main` se destinara a la aplicacion Next.js productiva.
+
 ## Objetivo de V1
 
 La primera version productiva sera un SaaS publico para PyMEs argentinas, construido con Next.js y TypeScript, desplegado en Vercel y respaldado por Supabase Auth, PostgreSQL y Storage privado.

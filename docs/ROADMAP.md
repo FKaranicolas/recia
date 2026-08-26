@@ -60,11 +60,11 @@ Ninguna.
 ### Decisiones relacionadas
 
 - Aceptada: la demo es un prototipo, no una aplicacion productiva (`DEC-013`).
-- Pendiente: estrategia para preservarla o archivarla (`DEC-023`).
+- Aceptada: preservar el prototipo mediante el tag `prototype-v0.1.0` y reemplazar la raiz (`DEC-023`).
 
 ## M1 - Base Next.js, TypeScript y despliegue
 
-**Estado:** Pendiente.
+**Estado:** Pendiente (sin bloqueos).
 
 ### Objetivo
 
@@ -73,11 +73,11 @@ Crear una base productiva instalable, verificable y desplegable sin incorporar a
 ### Dependencias
 
 - M0 completado.
-- Aprobar la matriz de permisos (`DEC-014`).
-- Aprobar el protocolo de benchmark, sin seleccionar aun al proveedor (`DEC-015`).
-- Resolver limites de archivos (`DEC-017`).
-- Aprobar el esquema fiscal inicial (`DEC-018`).
-- Resolver la estrategia de la demo (`DEC-023`).
+- Matriz de permisos aprobada (`DEC-014`).
+- Protocolo de benchmark aprobado, sin seleccionar aun al proveedor (`DEC-015`).
+- Limites de archivos aprobados (`DEC-017`).
+- Esquema fiscal inicial aprobado (`DEC-018`).
+- Estrategia de la demo aprobada (`DEC-023`).
 
 ### Entregables
 
@@ -104,7 +104,7 @@ Crear una base productiva instalable, verificable y desplegable sin incorporar a
 ### Decisiones relacionadas
 
 - Aceptadas: Next.js y TypeScript (`DEC-003`), Vercel (`DEC-004`).
-- Pendientes antes del scaffold: permisos (`DEC-014`), protocolo OCR (`DEC-015`), archivos (`DEC-017`), esquema fiscal (`DEC-018`) y demo (`DEC-023`). La licencia (`DEC-024`) debe resolverse antes de contribuciones o releases.
+- Aceptadas para el scaffold: permisos (`DEC-014`), protocolo OCR (`DEC-015`), archivos (`DEC-017`), esquema fiscal (`DEC-018`) y demo (`DEC-023`). La licencia (`DEC-024`) debe resolverse antes de contribuciones o releases.
 
 ## M2 - Autenticacion, organizaciones y RLS
 
@@ -145,7 +145,7 @@ Establecer identidad, membresias y aislamiento multi-tenant antes de almacenar c
 ### Decisiones relacionadas
 
 - Aceptadas: Supabase (`DEC-005`) y multi-tenancy con roles (`DEC-006`).
-- Pendiente: matriz exacta de permisos (`DEC-014`).
+- Aceptada: matriz conservadora de permisos (`DEC-014`).
 
 ## M3 - Archivo documental e ingesta
 
@@ -189,7 +189,7 @@ Recibir documentos de forma segura, conservar el original y mantener un estado d
 ### Decisiones relacionadas
 
 - Aceptada: formatos y conservacion del original (`DEC-007`).
-- Pendiente: limites y reglas de conversion (`DEC-017`).
+- Aceptada: limites y reglas de conversion (`DEC-017`).
 
 ## M4 - Benchmark e integracion OCR
 
@@ -210,10 +210,10 @@ Elegir e integrar un proveedor a partir de evidencia sobre comprobantes argentin
 
 - Corpus anonimizado y etiquetado.
 - Ground truth y script reproducible de evaluacion.
-- Comparacion de al menos dos proveedores.
+- Comparacion de tres candidatos.
 - Metricas por campo, documento, costo y latencia.
 - ADR de seleccion del proveedor.
-- Tablas `processing_jobs` y `receipt_data`.
+- Tablas `processing_jobs`, `receipt_data`, `receipt_tax_lines` y `receipt_other_taxes`.
 - Adaptador server-side con validacion estricta de salida.
 - Reintentos, timeout, idempotencia y trazabilidad de version.
 
@@ -235,7 +235,7 @@ Elegir e integrar un proveedor a partir de evidencia sobre comprobantes argentin
 ### Decisiones relacionadas
 
 - Aceptadas: procesamiento asincrono (`DEC-008`) y seleccion por benchmark (`DEC-009`).
-- Pendientes: protocolo (`DEC-015`), cola (`DEC-016`) y seleccion del proveedor despues del benchmark (`DEC-025`).
+- Aceptado: protocolo (`DEC-015`). Pendientes: cola (`DEC-016`) y seleccion del proveedor despues del benchmark (`DEC-025`).
 
 ## M5 - Revision y gestion de comprobantes
 
@@ -276,7 +276,7 @@ Convertir una extraccion trazable en datos fiscales revisados, consultables y au
 ### Decisiones relacionadas
 
 - Aceptada: revision humana dentro del alcance (`DEC-002`).
-- Pendiente: esquema fiscal y duplicados (`DEC-018`).
+- Aceptada: esquema fiscal normalizado y duplicados (`DEC-018`).
 
 ## M6 - Exportaciones CSV y XLSX
 
@@ -384,4 +384,4 @@ Estas lineas requieren nuevas decisiones y no deben retrasar los criterios de V1
 
 ## Proxima accion
 
-Resolver las decisiones bloqueantes indicadas en [HANDOFF.md](HANDOFF.md) y luego iniciar M1 con un scaffold minimo, sin integrar OCR antes de tener aislamiento y protocolo de benchmark.
+Iniciar M1 con un scaffold minimo de Next.js y TypeScript, preservar primero el prototipo con el tag acordado y no integrar OCR real antes de implementar aislamiento y ejecutar el protocolo de benchmark.

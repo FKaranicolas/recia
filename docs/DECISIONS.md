@@ -142,29 +142,33 @@ Fecha del registro inicial: 2026-08-26.
 - **Decision:** La implementacion vanilla se considera un prototipo de UX, no una base productiva terminada.
 - **Consecuencias:** No se desplegara con datos reales; los patrones visuales pueden migrarse sin conservar supuestos inseguros.
 - **Alternativas:** Conectar Supabase directamente reemplazando solo el cuerpo de las funciones actuales.
-- **Revision futura:** Definir como preservar o archivar el prototipo en `DEC-023`.
+- **Revision futura:** La preservacion quedo resuelta por `DEC-023`; revisar solo si se necesita congelar otra etapa demostrable.
 
-## Decisiones pendientes
+## Decisiones adicionales
 
 ### DEC-014 - Matriz exacta de permisos
 
-- **Estado:** Pendiente.
-- **Fecha:** Pendiente.
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-26.
 - **Contexto:** Los cuatro roles estan aceptados, pero falta definir permiso por operacion.
-- **Decision pendiente:** Determinar quien puede invitar, cambiar roles, cargar, revisar, exportar, eliminar, restaurar y administrar planes.
-- **Consecuencias:** Forma parte del gate acordado antes de M1 y bloquea las politicas RLS completas y los tests de M2.
+- **Decision:** Aplicar una matriz conservadora. El propietario puede realizar todas las operaciones, transferir propiedad, administrar el estado comercial y solicitar el borrado de la organizacion. El administrador gestiona documentos, exportaciones, restauraciones, configuracion e integrantes no propietarios, pero no transfiere propiedad, elimina la organizacion ni administra facturacion. El operador puede ver, descargar, cargar, procesar, revisar, editar, exportar y enviar documentos a papelera, pero no restaura, purga, configura la organizacion ni administra integrantes. Solo lectura puede ver y descargar documentos individuales, sin carga, edicion, eliminacion ni exportacion masiva.
+- **Consecuencias:** RLS y endpoints deben verificar tanto membresia como rol. Las acciones de UI no sustituyen autorizacion. Purga definitiva, propiedad y estado comercial quedan reservados al propietario o a procesos internos autorizados.
 - **Alternativas:** Matriz conservadora, roles mas simples o permisos configurables.
-- **Revision futura:** Resolver dentro del paquete de decisiones previo a M1.
+- **Revision futura:** Revisar con telemetria y feedback despues del lanzamiento, sin ampliar permisos por defecto.
 
 ### DEC-015 - Protocolo del benchmark OCR
 
-- **Estado:** Pendiente.
-- **Fecha:** Pendiente.
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-26.
 - **Contexto:** Deben definirse corpus, candidatos, metricas, pesos y umbrales antes de comparar.
-- **Decision pendiente:** Aprobar el corpus, ground truth, candidatos, metricas, pesos, umbrales y procedimiento reproducible.
-- **Consecuencias:** Forma parte del gate acordado antes de M1 y bloquea la ejecucion valida del benchmark de M4, pero no selecciona por si misma al proveedor.
+- **Decision:** Evaluar tres candidatos sobre el mismo corpus de 100 comprobantes argentinos autorizados y anonimizados: 35 Facturas A, 30 Facturas B, 15 Facturas C, 10 notas de credito/debito y 10 recibos. Debe incluir 40 PDF (al menos 15 escaneados), 40 JPG/PNG y 20 HEIC, con al menos 20 casos de calidad degradada que pueden superponerse con esos grupos. El ground truth tendra doble revision. Se mediran exactitud normalizada por campo, aprobacion documental de todos los campos criticos, omisiones/alucinaciones, latencia p50/p95, errores, costo, formatos, retencion, entrenamiento y subencargados. La ponderacion critica sera: tipo 10%, CUIT emisor 15%, fecha 10%, punto de venta 5%, numero 10%, moneda 5%, neto 10%, IVA/desglose 15%, otros tributos 5% y total 15%. El umbral de entrada sera al menos 95% de exactitud ponderada en campos criticos, 85% de documentos con todos los campos criticos correctos, menos de 2% de fallos tecnicos y p95 menor o igual a 30 segundos para documentos de hasta tres paginas. Todo candidato recibira exactamente los mismos bytes y una configuracion/modelo versionados en el manifiesto del benchmark.
+- **Consecuencias:** El corpus, ground truth, normalizadores, configuraciones y resultados deben versionarse sin datos reales sensibles. Cumplir umbrales habilita la comparacion comercial, pero no selecciona por si mismo al proveedor.
+- **Normalizacion:** Texto en Unicode NFC, trim, espacios colapsados y comparacion sin diferencias de mayusculas; CUIT solo con 11 digitos; fechas ISO `YYYY-MM-DD`; moneda ISO 4217; punto de venta y numero como digitos sin separadores y sin penalizar ceros de relleno; importes comparados como decimal con tolerancia maxima de `0.01`; tasas con tolerancia maxima de `0.0001`.
+- **Denominadores:** Un campo esperado y omitido cuenta como incorrecto. Un valor emitido cuando el ground truth es no aplicable cuenta como alucinacion. Los campos no aplicables y correctamente omitidos se excluyen del denominador de ese campo. Un fallo tecnico cuenta en la tasa de fallos y marca todos los campos criticos del documento como incorrectos.
+- **Adjudicacion:** Dos revisores etiquetan de forma independiente. Toda divergencia se resuelve por un tercer revisor antes de congelar el ground truth. El manifiesto guarda hash de archivos, split, normalizador y version de cada candidato.
+- **Latencia:** El umbral p95 de 30 segundos aplica hasta tres paginas; para cuatro a diez paginas se exige p95 menor o igual a 90 segundos y se reporta tambien latencia por pagina.
 - **Alternativas:** Benchmark interno con corpus propio o evaluacion externa independiente.
-- **Revision futura:** Resolver dentro del paquete de decisiones previo a M1. La seleccion posterior se registra por separado en `DEC-025`.
+- **Revision futura:** Repetir ante cambios mayores de modelo, precio o contrato. La seleccion posterior se registra por separado en `DEC-025`.
 
 ### DEC-016 - Proveedor de cola asincrona
 
@@ -178,23 +182,23 @@ Fecha del registro inicial: 2026-08-26.
 
 ### DEC-017 - Limites y conversion de archivos
 
-- **Estado:** Pendiente.
-- **Fecha:** Pendiente.
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-26.
 - **Contexto:** Los formatos estan aceptados, pero faltan limites de bytes, paginas y pixeles.
-- **Decision pendiente:** Definir maximos, politica de PDF multipagina, conversion de HEIC, scanning y rechazo de archivos.
-- **Consecuencias:** Forma parte del gate acordado antes de M1 y bloquea validaciones y cuotas de M3.
+- **Decision:** Aceptar JPG, PNG y HEIC de hasta 10 MB y 40 megapixeles; aceptar PDF de hasta 20 MB y 10 paginas. Validar magic bytes, MIME, dimensiones y paginas en servidor antes de encolar OCR. Rechazar PDF cifrado o con contrasena, SVG, archivos activos, corruptos y formatos no permitidos. Conservar el original inmutable; conversion HEIC, rasterizacion PDF, remocion de metadata y miniaturas son derivados separados.
+- **Consecuencias:** Los limites se aplican en cliente por UX, en API por seguridad y en Storage cuando sea posible. Un archivo rechazado no consume cuota OCR. La cantidad de paginas procesadas cuenta para uso y costo.
 - **Alternativas:** Limites unicos o limites diferenciados por plan/formato.
-- **Revision futura:** Resolver dentro del paquete de decisiones previo a M1.
+- **Revision futura:** Ajustar por telemetria y costos; cualquier aumento requiere revisar protecciones de abuso.
 
 ### DEC-018 - Esquema fiscal y duplicados
 
-- **Estado:** Pendiente.
-- **Fecha:** Pendiente.
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-26.
 - **Contexto:** Los campos previstos requieren tipos, obligatoriedad, alicuotas, redondeo y signos definidos.
-- **Decision pendiente:** Cerrar el esquema de `receipt_data`, tratamiento de impuestos/notas de credito y clave de duplicados.
-- **Consecuencias:** Forma parte del gate acordado antes de M1 y bloquea validacion completa, metricas y revision de M5.
+- **Decision:** Usar un nucleo normalizado en `receipt_data` y tablas hijas `receipt_tax_lines` y `receipt_other_taxes`. El nucleo guarda tipo, emisor/receptor, CUIT, fecha, punto de venta, numero, moneda ISO 4217, tipo de cambio, neto gravado, no gravado, exento, IVA total, otros tributos, total, CAE/CAI, vencimiento, categoria, medio de pago manual y estado de revision. Los importes usan `numeric(18,2)`, tasas `numeric(7,4)` y tipo de cambio `numeric(18,6)`, nunca float. Facturas y recibos tienen signo contable `1`; notas de credito, `-1`; los importes persistidos son absolutos y vistas/exportaciones aplican el signo. Una restriccion unica parcial evita duplicados activos por organizacion, CUIT emisor, tipo, punto de venta y numero cuando todos estan presentes.
+- **Consecuencias:** Se agregan `receipt_tax_lines` y `receipt_other_taxes` al modelo objetivo. Un duplicado se rechaza con referencia al documento existente; la correccion ocurre sobre ese registro o despues de enviarlo a papelera. La respuesta OCR cruda y las correcciones conservan trazabilidad, pero consultas y exportaciones usan datos normalizados revisados.
 - **Alternativas:** Esquema minimo fijo o estructura extensible para impuestos.
-- **Revision futura:** Aprobar una version inicial dentro del paquete previo a M1 y revisarla con muestras reales antes de M5.
+- **Revision futura:** Validar con el corpus y asesoramiento contable antes de cerrar migraciones de M5.
 
 ### DEC-019 - Contrato de CSV y XLSX
 
@@ -238,13 +242,13 @@ Fecha del registro inicial: 2026-08-26.
 
 ### DEC-023 - Migracion o archivo de la demo
 
-- **Estado:** Pendiente.
-- **Fecha:** Pendiente.
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-26.
 - **Contexto:** La demo contiene un sistema visual util, pero tambien supuestos incompatibles con produccion.
-- **Decision pendiente:** Preservarla en una rama/carpeta, migrarla incrementalmente o reemplazarla en `main`.
-- **Consecuencias:** Afecta la estructura inicial de M1 y la posibilidad de comparar UX.
+- **Decision:** Crear el tag inmutable `prototype-v0.1.0` sobre el commit `82185e7ff03c57e0f6c432424cee60be86b95603` y reemplazar la raiz de `main` con el scaffold Next.js. No mantener una copia duplicada en una carpeta o rama activa.
+- **Consecuencias:** El prototipo queda reproducible por tag e historial; `main` representa desde M1 la aplicacion productiva. Los patrones visuales se migran selectivamente, sin copiar persistencia o IA simuladas.
 - **Alternativas:** Rama `prototype`, carpeta `prototype/` o reemplazo con referencia en tags.
-- **Revision futura:** Resolver inmediatamente antes del scaffold.
+- **Revision futura:** No prevista; crear un nuevo tag si se necesita congelar otra etapa demostrable.
 
 ### DEC-024 - Licencia del repositorio
 

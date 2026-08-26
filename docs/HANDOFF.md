@@ -227,6 +227,14 @@ Original, `organization_id`, ruta privada, MIME, bytes, hash, paginas, uploader,
 
 Resultado OCR, valores revisados, version, proveedor y trazabilidad. Debe distinguir dato extraido de dato confirmado.
 
+### `receipt_tax_lines`
+
+Desglose normalizado por alicuota, con base imponible, tasa e importe de IVA.
+
+### `receipt_other_taxes`
+
+Percepciones y otros tributos normalizados por tipo, jurisdiccion, base, tasa e importe.
+
 ### `processing_jobs`
 
 Estado, intentos, idempotency key, error seguro, proveedor, version y tiempos de cada proceso.
@@ -257,7 +265,7 @@ Cuotas y consumo por organizacion y periodo para prueba y planes manuales.
 - Medio de pago opcional y manual.
 - Estado de revision.
 
-Tipos SQL, obligatoriedad, estructura de impuestos y regla de duplicados siguen pendientes en `DEC-018`.
+`DEC-018` fija `numeric(18,2)` para importes, `numeric(7,4)` para tasas y `numeric(18,6)` para tipo de cambio. Los importes se guardan como absolutos y el signo contable se deriva del tipo; una clave unica parcial evita duplicados activos por organizacion, CUIT emisor, tipo, punto de venta y numero cuando todos estan presentes.
 
 ## Alcance de V1
 
@@ -310,19 +318,27 @@ La fuente completa es [DECISIONS.md](DECISIONS.md). En resumen:
 - Registro publico, equipos y cobro manual.
 - Exclusiones de V1.
 - Demo tratada como prototipo.
+- Matriz conservadora de permisos aprobada.
+- Esquema fiscal normalizado con lineas de IVA y otros tributos.
+- Limites de 10 MB/40 MP para imagenes y 20 MB/10 paginas para PDF.
+- Benchmark de 100 documentos contra tres candidatos.
+- Prototipo preservado por el tag `prototype-v0.1.0` antes de reemplazar la raiz.
 
-## Decisiones pendientes y bloqueantes
+## Decisiones resueltas para M1
 
-- `DEC-014`: matriz exacta de permisos.
-- `DEC-015`: protocolo con corpus, candidatos, metricas y umbrales del benchmark.
+- `DEC-014`: matriz conservadora de permisos.
+- `DEC-015`: protocolo de 100 documentos, tres candidatos y umbrales de calidad/operacion.
+- `DEC-017`: limites, formatos y conversiones de archivos.
+- `DEC-018`: esquema fiscal normalizado, signos y duplicados.
+- `DEC-023`: tag inmutable del prototipo y reemplazo de la raiz.
+
+## Decisiones pendientes posteriores
+
 - `DEC-016`: proveedor de cola.
-- `DEC-017`: limites de archivos y paginas.
-- `DEC-018`: esquema fiscal y duplicados.
 - `DEC-019`: contrato de exportacion.
 - `DEC-020`: prueba, planes y precios.
 - `DEC-021`: retencion, eliminacion y backups.
 - `DEC-022`: email y observabilidad.
-- `DEC-023`: migracion o archivo de la demo.
 - `DEC-024`: licencia.
 - `DEC-025`: proveedor OCR, a decidir solamente despues del benchmark.
 
@@ -349,23 +365,18 @@ No implementar una decision marcada como pendiente suponiendo una respuesta sile
 
 ## Proxima tarea recomendada
 
-Resolver el paquete minimo de decisiones bloqueantes antes de crear el scaffold productivo:
-
-1. Aprobar la matriz de permisos de los cuatro roles.
-2. Aprobar el esquema fiscal inicial y regla de duplicados.
-3. Fijar limites de archivo y paginas.
-4. Definir el protocolo de benchmark, sin elegir aun al ganador.
-5. Elegir como preservar o archivar la demo.
-
-Una vez resueltas, iniciar M1 de [ROADMAP.md](ROADMAP.md).
+Iniciar M1 de [ROADMAP.md](ROADMAP.md): verificar el tag remoto `prototype-v0.1.0` ya publicado, reemplazar la raiz con un scaffold minimo de Next.js App Router y TypeScript, incorporar verificaciones locales/CI y dejar preparado el acceso a Supabase mediante variables documentadas, sin implementar todavia OCR real.
 
 ## Definition of Done de la proxima tarea
 
-- `DEC-014`, `DEC-017`, `DEC-018` y `DEC-023` pasan a `Aceptada` con consecuencias claras.
-- `DEC-015` pasa a `Aceptada` con corpus, distribucion, candidatos, campos, metricas, pesos y umbrales aprobados; `DEC-025` permanece pendiente hasta ejecutar el benchmark.
-- Las decisiones no contradicen el alcance de V1.
-- ROADMAP y HANDOFF se actualizan en el mismo cambio.
-- El siguiente implementador puede crear el scaffold sin inventar permisos, tipos fiscales o limites.
+- El tag remoto `prototype-v0.1.0` apunta al commit documental/prototipo `82185e7ff03c57e0f6c432424cee60be86b95603`.
+- La raiz contiene Next.js App Router y TypeScript, y la demo vanilla sigue recuperable por tag.
+- Existen comandos de desarrollo, lint, typecheck, test y build.
+- CI ejecuta esas verificaciones sobre pull requests y `main`.
+- `.env.example` documenta variables publicas de Supabase sin secretos.
+- La aplicacion tiene una pagina inicial minima que identifica el estado de M1 sin afirmar que auth, Storage u OCR ya funcionan.
+- README, ROADMAP y HANDOFF reflejan la nueva estructura.
+- Build, lint, typecheck y tests pasan antes del commit.
 
 ## Como mantener este handoff
 
