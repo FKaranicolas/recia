@@ -4,26 +4,28 @@
 
 - **Repositorio:** https://github.com/FKaranicolas/recia
 - **Rama:** `main`
-- **Commit del codigo auditado:** `d07886d4fc12c962ab12dde1ed24b2e8f6389239`
+- **Commit del prototipo preservado:** `82185e7ff03c57e0f6c432424cee60be86b95603`
+- **Tag del prototipo:** `prototype-v0.1.0`
+- **Commit de decisiones previo a M1:** `1b28124`
 - **Commit que contiene este snapshot:** el commit documental que contiene este archivo; obtenerlo con `git log -1 --format=%H -- docs/HANDOFF.md`.
 - **Fecha del snapshot:** 2026-08-26
 - **Checkout usado para documentar:** `/home/kara96/code/recia`
-- **Fuentes canonicas:** este archivo, [DECISIONS.md](DECISIONS.md), [ROADMAP.md](ROADMAP.md) y el codigo de `main`.
+- **Fuentes canonicas:** este archivo, [DECISIONS.md](DECISIONS.md), [ROADMAP.md](ROADMAP.md), [SUPABASE.md](SUPABASE.md) y el codigo de `main`.
 
-El SHA fijo corresponde al prototipo auditado, no al paquete documental. Para reproducir este snapshot se debe usar el commit que contiene `docs/HANDOFF.md`; para determinar el estado de implementacion se debe revisar ademas el `HEAD` actual de `main`.
+El tag fijo reproduce la demo vanilla. La raiz de `main` contiene desde M1 la aplicacion Next.js; para determinar el estado exacto se debe revisar el `HEAD` actual y el commit que contiene este handoff.
 
 ## Resumen ejecutivo
 
 RECIA busca convertirse en un SaaS publico para PyMEs argentinas que cargue comprobantes, extraiga datos fiscales, permita revisarlos, archive los originales y exporte CSV/XLSX.
 
-El repositorio contiene solamente una demo responsive en HTML, CSS y JavaScript vanilla. La IA y la base de datos son simulaciones locales. No es apta para datos reales ni para un piloto pagado.
+El repositorio contiene una base Next.js 16, React 19 y TypeScript con lint, tests, build y CI. La pagina actual comunica el estado de construccion y no procesa documentos. El prototipo anterior ya no esta en la raiz y se recupera por tag.
 
 La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabase Auth/PostgreSQL/Storage, organizaciones multi-tenant, RLS, procesamiento OCR asincrono y revision humana.
 
 ## Instrucciones no negociables
 
-- No presentar la demo actual como producto terminado.
-- No enviar documentos reales a `localStorage` ni a la IA simulada.
+- No presentar la pagina de M1 como producto terminado.
+- No reincorporar `localStorage` ni la IA simulada desde el tag del prototipo.
 - No exponer claves de Supabase `service_role` ni del proveedor OCR al navegador.
 - No implementar acceso a datos sin `organization_id`, RLS y tests negativos entre tenants.
 - No elegir proveedor OCR antes de definir y ejecutar el benchmark.
@@ -35,20 +37,22 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 
 ### Implementado
 
-- Layout responsive de dashboard, captura y comprobantes.
-- Router por hash con tres vistas.
-- Seleccion de imagen, preview y compresion en navegador.
-- Animacion de procesamiento simulado.
-- Formulario de revision y validacion basica.
-- CRUD local, busqueda, filtros y detalle.
-- Dashboard y datos ficticios iniciales.
-- Build opcional a un solo archivo HTML.
+- Next.js 16 con App Router y React 19.
+- TypeScript estricto.
+- Pagina responsive de estado M1 sin claims de funciones inexistentes.
+- ESLint 9 con reglas de Next.js.
+- Vitest, Testing Library y dos pruebas de la pagina inicial.
+- Scripts de lint, typecheck, test, build y verificacion completa.
+- GitHub Actions para ejecutar la cadena sobre `main` y pull requests.
+- Variables publicas de Supabase documentadas en `.env.example`.
+- Estrategia inicial de ambientes, migraciones, RLS y Storage en `docs/SUPABASE.md`.
+- Node 24.20.0 instalado localmente en WSL y fijado en `.nvmrc`; `package.json` exige Node 24 o superior.
+- Prototipo publicado en el tag `prototype-v0.1.0`.
 
 ### No implementado
 
-- Next.js y TypeScript.
 - Backend o API HTTP real.
-- Supabase y Vercel.
+- Supabase conectado y proyecto Vercel enlazado.
 - Autenticacion, organizaciones, invitaciones y roles.
 - RLS y aislamiento multi-tenant.
 - Storage privado y preservacion del original.
@@ -57,73 +61,49 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 - Procesamiento asincrono durable.
 - Exportaciones CSV/XLSX.
 - Auditoria, backups, observabilidad y rate limiting.
-- Tests automatizados y CI.
+- Tests de integracion, RLS y E2E.
 - Flujos comerciales, privacidad, terminos y retencion.
 
-## Inventario del repositorio
+## Inventario principal del repositorio
 
 | Archivo | Responsabilidad actual |
 |---|---|
-| `index.html` | Shell, navegacion, vistas vacias y carga de CSS/JS. |
-| `build.js` | Incrusta CSS y los seis scripts en `recia-standalone.html`; no compila. |
-| `css/styles.css` | Tokens, componentes, vistas, animaciones y responsive. |
-| `js/utils.js` | DOM, IDs, formato ARS/es-AR, fechas, imagenes y toasts. |
-| `js/storage.js` | Driver local, CRUD, reglas, metricas y seed ficticio. |
-| `js/ai.js` | Pasos visuales y generacion aleatoria de extracciones. |
-| `js/receipts.js` | Formulario, validacion, filtros, listado, detalle y edicion. |
-| `js/dashboard.js` | KPIs, actividad, categorias y comprobantes recientes. |
-| `js/app.js` | Modal, captura, flujo de procesamiento y router. |
+| `src/app/layout.tsx` | Metadata, idioma y layout raiz. |
+| `src/app/page.tsx` | Pagina de estado de construccion M1. |
+| `src/app/globals.css` | Sistema visual responsive de la pagina inicial. |
+| `src/app/page.test.tsx` | Pruebas de claims y secuencia de hitos. |
+| `.github/workflows/ci.yml` | Lint, typecheck, tests y build en GitHub. |
+| `.env.example` | Contrato de variables publicas de Supabase. |
+| `package.json` | Versiones y comandos del proyecto. |
+| `docs/SUPABASE.md` | Estrategia de ambientes, migraciones, RLS y Storage. |
 
-## Como ejecutar y verificar la demo
+## Como ejecutar y verificar M1
 
 ```bash
-git clone https://github.com/FKaranicolas/recia.git
+git clone git@github.com:FKaranicolas/recia.git
 cd recia
-python3 -m http.server 8000
+npm ci
+npm run dev
 ```
 
-Abrir `http://localhost:8000/#/dashboard`.
-
-En Windows puede usarse:
-
-```powershell
-py -m http.server 8000
-```
-
-Rutas:
-
-- `#/dashboard`
-- `#/nuevo`
-- `#/comprobantes`
-
-Build standalone:
+Abrir `http://localhost:3000`. Node 24 o superior es obligatorio.
 
 ```bash
-node build.js
+npm run verify
 ```
 
-No existe `package.json`, suite automatizada ni `npm test`. El smoke test actual consiste en cargar una imagen, procesar la simulacion, corregir y guardar, recargar, buscar, editar y eliminar.
-
-Para reiniciar la demo desde la consola del navegador:
-
-```js
-localStorage.removeItem('recia.receipts.v1');
-localStorage.removeItem('recia.seeded.v1');
-location.reload();
-```
+`verify` ejecuta lint, typecheck, Vitest y el build de produccion. M1 fue verificado localmente con Node `24.20.0`, npm `11.19.0`, 2 tests aprobados y 0 vulnerabilidades reportadas por `npm audit`.
 
 ## Flujo actual de usuario
 
-1. `App.init()` inicializa la captura y carga el seed si corresponde.
-2. El usuario navega entre resumen, nuevo y comprobantes mediante hashes.
-3. En nuevo, selecciona o toma una imagen.
-4. `resizeImage()` la convierte a JPEG de hasta 1100 px y calidad 0,72.
-5. `AI.processDocumentWithAI()` espera, actualiza pasos y devuelve datos aleatorios; no usa la imagen.
-6. El usuario revisa un formulario y guarda.
-7. `DB.saveReceipt()` persiste metadata e imagen base64 en `localStorage` o memoria.
-8. Listado y dashboard vuelven a leer todo el arreglo local.
+1. Next.js renderiza estaticamente la pagina `/`.
+2. La pagina muestra M0 completado, M1 en curso y M2 como siguiente.
+3. Un aviso explicito informa que auth, archivo y OCR aun no funcionan.
+4. El enlace del footer permite consultar el prototipo preservado.
 
-## Contrato y reglas actuales
+## Contrato y reglas del prototipo historico
+
+Las siguientes reglas ya no se ejecutan en `main`; se conservan como contexto para no reintroducir sus defectos al migrar UX desde `prototype-v0.1.0`.
 
 ### Campos de un comprobante
 
@@ -290,18 +270,18 @@ Cuotas y consumo por organizacion y periodo para prueba y planes manuales.
 
 ## Matriz de brecha
 
-| Area | Demo | V1 |
+| Area | Estado M1 | V1 |
 |---|---|---|
-| Frontend | Vanilla JS | Next.js + TypeScript |
-| Datos | `localStorage`/memoria | PostgreSQL + RLS |
-| Auth | No existe | Supabase Auth |
-| Tenancy | No existe | Organizaciones y roles |
-| Archivos | JPEG base64 local | Original privado en Storage |
-| OCR | Aleatorio | Benchmark + proveedor real |
-| Formatos | Imagen del navegador | PDF/JPG/PNG/HEIC |
+| Frontend | Next.js + TypeScript, pagina de estado | Aplicacion completa responsive |
+| Datos | Sin base conectada | PostgreSQL + RLS |
+| Auth | Sin implementar | Supabase Auth |
+| Tenancy | Modelo decidido, sin implementar | Organizaciones y roles |
+| Archivos | Sin implementar | Original privado en Storage |
+| OCR | Sin implementar | Benchmark + proveedor real |
+| Formatos | Limites decididos, sin upload | PDF/JPG/PNG/HEIC |
 | Exportacion | No existe | CSV/XLSX |
-| Operacion | No existe | Auditoria, backups y alertas |
-| Calidad | Smoke test manual | Unit, integration, RLS y E2E |
+| Operacion | CI local/GitHub; preview pendiente | Auditoria, backups y alertas |
+| Calidad | Lint, typecheck, unit test y build | Unit, integration, RLS y E2E |
 
 ## Decisiones aceptadas
 
@@ -346,37 +326,26 @@ No implementar una decision marcada como pendiente suponiendo una respuesta sile
 
 ## Hallazgos y riesgos conocidos
 
-1. `js/ai.js` genera datos aleatorios y no usa el documento.
-2. No hay auth, autorizacion ni aislamiento multi-tenant.
-3. Los archivos se guardan como base64 en `localStorage`; el fallback en memoria no es durable.
-4. El original se pierde al convertirlo a JPEG comprimido.
-5. PDF no esta soportado y HEIC depende del navegador.
-6. No existe exportacion.
-7. `U.toNumber()` elimina puntos y corrompe importes como `1234.56`.
-8. Las notas de credito incrementan el total de gastos.
-9. La metrica llamada precision es confianza simulada.
-10. Un procesamiento anterior puede asociarse a una captura nueva si se navega durante la espera.
-11. Las fechas UTC pueden contabilizar actividad en el dia local incorrecto.
-12. No hay limites previos de bytes o pixeles para uploads.
-13. Futuros valores de URL/ID no confiables podrian llegar a sinks `innerHTML`.
-14. Editar un seed con `Debito automatico` puede cambiar silenciosamente el medio de pago.
-15. No existen auditoria, soft delete, backups, restauracion, observabilidad o rate limiting.
-16. No hay politica legal, licencia, CI ni tests automaticos.
+1. M1 no tiene todavia un preview verificado en Vercel.
+2. Supabase no esta conectado; las variables son solo un contrato vacio.
+3. CI esta versionada, pero debe confirmarse verde despues del primer push del scaffold.
+4. ESLint esta fijado en la ultima version 9 compatible porque un plugin transitivo de `eslint-config-next` falla con ESLint 10; revisar al actualizar Next.
+5. No hay licencia definida.
+6. Auth, RLS, uploads, OCR, exportacion, auditoria y backups siguen sin implementar y no deben simularse.
+7. Los defectos del prototipo (`localStorage`, importes decimales, notas de credito y carrera de captura) permanecen solo en el tag y no deben copiarse.
 
 ## Proxima tarea recomendada
 
-Iniciar M1 de [ROADMAP.md](ROADMAP.md): verificar el tag remoto `prototype-v0.1.0` ya publicado, reemplazar la raiz con un scaffold minimo de Next.js App Router y TypeScript, incorporar verificaciones locales/CI y dejar preparado el acceso a Supabase mediante variables documentadas, sin implementar todavia OCR real.
+Completar M1 de [ROADMAP.md](ROADMAP.md): publicar el scaffold, verificar CI, enlazar `FKaranicolas/recia` con un proyecto Vercel y confirmar una URL de preview. Despues actualizar M1 a `Completado` e iniciar M2 con Supabase Auth, organizaciones y RLS.
 
 ## Definition of Done de la proxima tarea
 
-- El tag remoto `prototype-v0.1.0` apunta al commit documental/prototipo `82185e7ff03c57e0f6c432424cee60be86b95603`.
-- La raiz contiene Next.js App Router y TypeScript, y la demo vanilla sigue recuperable por tag.
-- Existen comandos de desarrollo, lint, typecheck, test y build.
-- CI ejecuta esas verificaciones sobre pull requests y `main`.
-- `.env.example` documenta variables publicas de Supabase sin secretos.
-- La aplicacion tiene una pagina inicial minima que identifica el estado de M1 sin afirmar que auth, Storage u OCR ya funcionan.
-- README, ROADMAP y HANDOFF reflejan la nueva estructura.
-- Build, lint, typecheck y tests pasan antes del commit.
+- El commit del scaffold esta publicado en `origin/main`.
+- GitHub Actions finaliza en verde para lint, typecheck, tests y build.
+- Vercel esta enlazado al repositorio con Node 24 y genera un preview accesible.
+- No hay secretos en Git, logs o variables publicas.
+- La URL, commit desplegado y resultado de CI quedan registrados en este handoff.
+- M1 cambia a `Completado` y la proxima tarea pasa a M2.
 
 ## Como mantener este handoff
 
@@ -402,6 +371,9 @@ ejecuta las verificaciones del hito y actualiza el handoff.
 
 ## Historial del handoff
 
-| Fecha | Codigo auditado | Cambio |
+| Fecha | Referencia | Cambio |
 |---|---|---|
-| 2026-08-26 | `d07886d4fc12c962ab12dde1ed24b2e8f6389239` | Snapshot inicial del prototipo y arquitectura objetivo. |
+| 2026-08-26 | `d07886d` | Auditoria inicial del prototipo. |
+| 2026-08-26 | `82185e7` / `prototype-v0.1.0` | Documentacion y preservacion del prototipo. |
+| 2026-08-26 | `1b28124` | Decisiones bloqueantes de M1 resueltas. |
+| 2026-08-26 | Working tree posterior a `1b28124` | Scaffold M1 verificado localmente; push, CI y preview pendientes. |

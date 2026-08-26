@@ -64,7 +64,16 @@ Ninguna.
 
 ## M1 - Base Next.js, TypeScript y despliegue
 
-**Estado:** Pendiente (sin bloqueos).
+**Estado:** En curso.
+
+### Progreso actual
+
+- Tag remoto `prototype-v0.1.0` publicado.
+- Scaffold Next.js App Router y TypeScript creado en la raiz.
+- Lint, typecheck, tests y build configurados y verificados localmente.
+- CI de GitHub Actions incorporada.
+- Variables publicas y estrategia de migraciones de Supabase documentadas.
+- Pendiente: enlazar el proyecto en Vercel y verificar un preview remoto.
 
 ### Objetivo
 
@@ -384,4 +393,4 @@ Estas lineas requieren nuevas decisiones y no deben retrasar los criterios de V1
 
 ## Proxima accion
 
-Iniciar M1 con un scaffold minimo de Next.js y TypeScript, preservar primero el prototipo con el tag acordado y no integrar OCR real antes de implementar aislamiento y ejecutar el protocolo de benchmark.
+Completar M1 publicando el scaffold, verificar GitHub Actions en verde y enlazar el repositorio con Vercel para obtener un preview accesible. No iniciar M2 ni integrar OCR real hasta registrar esos resultados en el handoff.

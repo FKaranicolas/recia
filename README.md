@@ -1,161 +1,126 @@
 # RECIA
 
-> Estado: prototipo funcional. El OCR y la persistencia remota todavia estan simulados.
+> Estado: M1 en curso. La base Next.js esta implementada; auth, documentos y OCR todavia no existen.
 
-## Que es RECIA
+RECIA sera un SaaS para que PyMEs argentinas carguen comprobantes, extraigan datos fiscales, revisen los resultados, conserven los originales y exporten informacion administrativa.
 
-RECIA es un producto en desarrollo para que PyMEs argentinas puedan cargar comprobantes, extraer sus datos fiscales, revisarlos, conservar los archivos originales y exportar la informacion para su uso administrativo.
+La raiz de `main` contiene la nueva base productiva. El prototipo vanilla anterior permanece disponible en el tag inmutable [`prototype-v0.1.0`](https://github.com/FKaranicolas/recia/tree/prototype-v0.1.0).
 
-Este repositorio contiene actualmente la demo que valida el flujo de usuario y la interfaz. No contiene todavia la aplicacion SaaS productiva.
+## Estado actual
 
-## Estado actual del repositorio
+M1 incorpora:
 
-La demo esta implementada con HTML, CSS y JavaScript vanilla. Permite:
+- Next.js 16 con App Router.
+- React 19 y TypeScript estricto.
+- ESLint y Vitest con Testing Library.
+- Build estatico de la pagina inicial de estado.
+- CI en GitHub Actions para lint, typecheck, tests y build.
+- Variables publicas de Supabase documentadas sin credenciales reales.
 
-- Capturar o seleccionar una imagen.
-- Simular la extraccion de datos de un comprobante.
-- Revisar y editar los datos generados.
-- Guardar, buscar, filtrar y eliminar comprobantes en el navegador.
-- Consultar un dashboard con metricas locales.
-- Cargar trece comprobantes ficticios en la primera ejecucion.
+Todavia no estan implementados:
 
-La extraccion de `js/ai.js` no analiza el archivo: genera valores aleatorios. Los comprobantes se guardan en `localStorage` y, cuando no esta disponible, en memoria volatil.
+- Registro o autenticacion.
+- Organizaciones, membresias, roles o RLS.
+- Supabase conectado.
+- Carga y archivo de documentos.
+- OCR/IA real.
+- Exportaciones CSV/XLSX.
+- Cobro o planes.
 
-El snapshot de esta demo se preserva en el tag inmutable `prototype-v0.1.0`. Desde M1, la raiz de `main` se destinara a la aplicacion Next.js productiva.
+## Requisitos
 
-## Objetivo de V1
+- Node.js 24 o superior.
+- npm 11 o superior.
 
-La primera version productiva sera un SaaS publico para PyMEs argentinas, construido con Next.js y TypeScript, desplegado en Vercel y respaldado por Supabase Auth, PostgreSQL y Storage privado.
+Las versiones de dependencias quedan fijadas en `package-lock.json`.
 
-La V1 incorporara organizaciones con varios usuarios, roles, aislamiento multi-tenant mediante Row Level Security (RLS), procesamiento OCR real, revision humana, archivo documental y exportaciones.
+## Instalacion
 
-### Incluido en V1
+```bash
+git clone git@github.com:FKaranicolas/recia.git
+cd recia
+npm ci
+```
+
+Si se necesitan variables de Supabase para un entorno posterior, crear `.env.local` a partir de `.env.example`. M1 no requiere valores para ejecutar la pagina estatica.
+
+## Desarrollo
+
+```bash
+npm run dev
+```
+
+Abrir `http://localhost:3000`.
+
+## Verificaciones
+
+Ejecutar toda la cadena local:
+
+```bash
+npm run verify
+```
+
+Comandos individuales:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Modo interactivo de tests:
+
+```bash
+npm run test:watch
+```
+
+## Variables de entorno
+
+`.env.example` declara solamente configuracion publica:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+No agregar `service_role`, claves OCR ni otros secretos con prefijo `NEXT_PUBLIC_`.
+
+## Estructura
+
+```text
+.github/workflows/ci.yml  Verificaciones de integracion continua
+docs/                     Roadmap, decisiones y handoff
+src/app/                  App Router, estilos y pruebas
+.env.example              Contrato de configuracion publica
+eslint.config.mjs         Reglas de lint
+next.config.ts            Configuracion de Next.js
+vitest.config.ts          Configuracion de tests
+```
+
+## Despliegue
+
+La aplicacion esta preparada para Vercel, pero M1 no se considerara completo hasta enlazar el repositorio, configurar el proyecto y verificar una URL de preview. No se deben cargar secretos reales hasta implementar el manejo correspondiente.
+
+## Alcance de V1
 
 - Registro publico con prueba limitada.
-- Organizaciones, membresias y roles.
-- Carga de PDF, JPG, PNG y HEIC.
-- Conservacion inmutable del documento original.
-- Extraccion OCR/IA ejecutada en el servidor.
-- Procesamiento asincrono con estados, reintentos e idempotencia.
-- Revision y correccion humana.
-- Busqueda, filtros, descarga y auditoria.
-- Exportacion server-side a CSV y XLSX.
-- Activacion y cobro manual de planes.
-- Ambientes separados de desarrollo, staging y produccion.
+- Organizaciones, equipos y roles conservadores.
+- PDF, JPG, PNG y HEIC con originales privados.
+- OCR server-side elegido mediante benchmark.
+- Revision humana y archivo documental.
+- CSV y XLSX generados en servidor.
+- Activacion y cobro manual.
 
-### Fuera de alcance de V1
+ARCA, integraciones contables, ingesta por email, app movil nativa, billing automatico y contabilizacion sin revision quedan fuera de V1.
 
-- Integracion con ARCA.
-- Integraciones con Tango, Xubio u otros sistemas contables.
-- Ingesta de comprobantes por email.
-- Aplicacion movil nativa.
-- Billing recurrente automatizado.
-- Contabilizacion automatica sin revision humana.
+## Documentacion
 
-## Instalacion de la demo actual
-
-### Requisitos
-
-- Git.
-- Un navegador moderno.
-- Python 3 u otro servidor HTTP estatico.
-- Node.js solamente para generar el HTML standalone.
-
-```bash
-git clone https://github.com/FKaranicolas/recia.git
-cd recia
-```
-
-La interfaz usa Google Fonts y necesita conexion para descargarlas. La logica de la demo no consume servicios externos.
-
-## Ejecucion
-
-En Linux o macOS:
-
-```bash
-python3 -m http.server 8000
-```
-
-En Windows:
-
-```powershell
-py -m http.server 8000
-```
-
-Abrir `http://localhost:8000/#/dashboard`.
-
-Rutas disponibles:
-
-- `#/dashboard`
-- `#/nuevo`
-- `#/comprobantes`
-
-Para generar una version con el CSS y JavaScript embebidos:
-
-```bash
-node build.js
-```
-
-El resultado es `recia-standalone.html`. Este script concatena archivos; no compila ni transpila el codigo.
-
-## Pruebas
-
-El repositorio no tiene una suite de tests automatizados ni un comando `npm test`.
-
-### Smoke test manual
-
-1. Abrir `#/dashboard` y verificar que la primera ejecucion muestre los datos ficticios.
-2. Ir a `#/nuevo` y seleccionar una imagen ficticia o no sensible que el navegador pueda decodificar. No usar comprobantes reales en esta demo.
-3. Procesarla y comprobar que se muestra un resultado simulado.
-4. Corregir campos y guardar el comprobante.
-5. Buscarlo, filtrarlo, editarlo y abrir su detalle.
-6. Recargar la pagina y verificar la persistencia cuando el driver indicado sea `localStorage`.
-7. Eliminar el comprobante.
-8. Ejecutar `node build.js` y comprobar que se genera `recia-standalone.html`.
-
-Para restablecer los datos demo, ejecutar en la consola del navegador:
-
-```js
-localStorage.removeItem('recia.receipts.v1');
-localStorage.removeItem('recia.seeded.v1');
-location.reload();
-```
-
-## Arquitectura actual y objetivo
-
-| Area | Demo actual | Objetivo V1 |
-|---|---|---|
-| Frontend | HTML, CSS y JavaScript vanilla | Next.js App Router y TypeScript |
-| Hosting | Sin configuracion | Vercel |
-| Autenticacion | No existe | Supabase Auth |
-| Datos | `localStorage` o memoria | Supabase PostgreSQL |
-| Archivos | Data URL local comprimida | Supabase Storage privado |
-| Multi-tenancy | No existe | Organizaciones, roles y RLS |
-| OCR | Valores aleatorios | Proveedor elegido mediante benchmark |
-| Formatos | Imagenes decodificables por el navegador | PDF, JPG, PNG y HEIC |
-| Exportaciones | No existen | CSV y XLSX server-side |
-| Tests y CI | No existen | Suite automatizada y CI |
-
-La demo tampoco expone una API HTTP. El endpoint `/api/process-receipt` que aparece en `js/ai.js` es solamente pseudocodigo comentado.
-
-## Limitaciones conocidas
-
-- El archivo subido no se utiliza para producir la extraccion.
-- No hay usuarios, permisos ni aislamiento entre empresas.
-- El almacenamiento local puede perder datos o quedarse sin espacio.
-- El original se convierte a JPEG comprimido; PDF no esta soportado y HEIC no esta garantizado.
-- No hay exportaciones, auditoria, backups ni recuperacion.
-- Los importes con punto decimal pueden ser interpretados incorrectamente.
-- Las notas de credito se suman como gastos positivos.
-- La metrica de precision representa confianza simulada, no precision medida.
-- No existen limites robustos para los archivos cargados.
-
-## Documentacion del proyecto
-
-- [Hoja de ruta de implementacion](docs/ROADMAP.md)
-- [Registro de decisiones](docs/DECISIONS.md)
-- [Contexto y relevo operativo](docs/HANDOFF.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Decisiones](docs/DECISIONS.md)
+- [Handoff operativo](docs/HANDOFF.md)
+- [Estrategia de Supabase](docs/SUPABASE.md)
 
 ## Licencia
 
-El repositorio todavia no tiene una licencia definida. Hasta incorporar un archivo `LICENSE`, no debe asumirse ningun permiso de reutilizacion o distribucion.
+El repositorio todavia no tiene una licencia definida. No debe asumirse permiso de reutilizacion o distribucion hasta incorporar un archivo `LICENSE`.
