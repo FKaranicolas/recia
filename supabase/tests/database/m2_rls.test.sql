@@ -103,17 +103,13 @@ select is(
 );
 
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
-select is(
-  (
-    with changed as (
-      update public.organizations
-      set name = 'Compromised B'
-      where id = 'b0000000-0000-0000-0000-000000000001'
-      returning id
-    )
-    select count(*) from changed
-  ),
-  0::bigint,
+select is_empty(
+  $$
+    update public.organizations
+    set name = 'Compromised B'
+    where id = 'b0000000-0000-0000-0000-000000000001'
+    returning id
+  $$,
   'owner A cannot update organization B'
 );
 
