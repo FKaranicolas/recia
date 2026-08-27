@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "RECIA | Procesamiento de comprobantes",
   description:
     "RECIA esta construyendo una plataforma segura para procesar y archivar comprobantes de PyMEs argentinas.",
+  referrer: "no-referrer",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

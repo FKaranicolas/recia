@@ -1,0 +1,1 @@
+-- Development seed data is intentionally empty. Auth fixtures live in database tests.

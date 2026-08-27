@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const milestones = [
   {
     code: "M0",
@@ -15,7 +17,7 @@ const milestones = [
     code: "M2",
     title: "Identidad y organizaciones",
     detail: "Supabase Auth, equipos, roles y aislamiento RLS.",
-    state: "Siguiente",
+    state: "En curso",
   },
 ] as const;
 
@@ -39,9 +41,15 @@ export default function Home() {
             <small>AI DOCUMENT PROCESSING</small>
           </span>
         </a>
-        <span className="buildBadge">
-          <span aria-hidden="true" /> M1 COMPLETADO
-        </span>
+        <div className="topbarActions">
+          <Link href="/login">Ingresar</Link>
+          <Link className="topbarPrimary" href="/sign-up">
+            Crear cuenta
+          </Link>
+          <span className="buildBadge">
+            <span aria-hidden="true" /> M2 EN CURSO
+          </span>
+        </div>
       </header>
 
       <section className="hero" id="inicio">
@@ -59,8 +67,8 @@ export default function Home() {
           <div className="notice" role="status">
             <strong>Estado actual</strong>
             <span>
-              La autenticacion, el archivo documental y el OCR real se incorporan en
-              los proximos hitos. Esta pantalla no procesa documentos todavia.
+              Auth y organizaciones ya tienen una base verificable. El archivo documental
+              y el OCR real llegan en los proximos hitos; esta pantalla no procesa documentos.
             </span>
           </div>
         </div>
@@ -81,7 +89,7 @@ export default function Home() {
               </div>
             ))}
           </dl>
-          <p>Supabase, organizaciones y documentos comienzan en los siguientes hitos.</p>
+          <p>Supabase Auth y organizaciones avanzan en M2; documentos comienzan en M3.</p>
         </aside>
       </section>
 
