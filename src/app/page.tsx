@@ -8,8 +8,8 @@ const milestones = [
   {
     code: "M1",
     title: "Base productiva",
-    detail: "Next.js, TypeScript, pruebas e integracion continua.",
-    state: "En curso",
+    detail: "Next.js, TypeScript, pruebas, CI y despliegue continuo.",
+    state: "Completado",
   },
   {
     code: "M2",
@@ -40,7 +40,7 @@ export default function Home() {
           </span>
         </a>
         <span className="buildBadge">
-          <span aria-hidden="true" /> M1 EN CONSTRUCCION
+          <span aria-hidden="true" /> M1 COMPLETADO
         </span>
       </header>
 

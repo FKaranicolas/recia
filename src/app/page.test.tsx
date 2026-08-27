@@ -4,13 +4,13 @@ import { describe, expect, it } from "vitest";
 import Home from "./page";
 
 describe("Home", () => {
-  it("describes M1 without claiming unfinished capabilities", () => {
+  it("describes the completed M1 without claiming unfinished capabilities", () => {
     render(<Home />);
 
     expect(
       screen.getByRole("heading", { name: /menos carga manual/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText("M1 EN CONSTRUCCION")).toBeInTheDocument();
+    expect(screen.getByText("M1 COMPLETADO")).toBeInTheDocument();
     expect(
       screen.getByText(/esta pantalla no procesa documentos todavia/i),
     ).toBeInTheDocument();

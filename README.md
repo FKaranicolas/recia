@@ -1,6 +1,6 @@
 # RECIA
 
-> Estado: M1 en curso. La base Next.js esta implementada; auth, documentos y OCR todavia no existen.
+> Estado: M1 completado. La base Next.js esta desplegada; auth, documentos y OCR todavia no existen.
 
 RECIA sera un SaaS para que PyMEs argentinas carguen comprobantes, extraigan datos fiscales, revisen los resultados, conserven los originales y exporten informacion administrativa.
 
@@ -15,6 +15,7 @@ M1 incorpora:
 - ESLint y Vitest con Testing Library.
 - Build estatico de la pagina inicial de estado.
 - CI en GitHub Actions para lint, typecheck, tests y build.
+- Despliegue continuo en Vercel: https://recia.vercel.app.
 - Variables publicas de Supabase documentadas sin credenciales reales.
 
 Todavia no estan implementados:
@@ -100,7 +101,7 @@ vitest.config.ts          Configuracion de tests
 
 ## Despliegue
 
-La aplicacion esta preparada para Vercel, pero M1 no se considerara completo hasta enlazar el repositorio, configurar el proyecto y verificar una URL de preview. No se deben cargar secretos reales hasta implementar el manejo correspondiente.
+La aplicacion esta enlazada con Vercel y disponible en https://recia.vercel.app. Cada cambio publicado en `main` genera un deployment de produccion. No se deben cargar secretos reales hasta implementar el manejo correspondiente.
 
 ## Alcance de V1
 

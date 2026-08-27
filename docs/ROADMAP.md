@@ -64,16 +64,17 @@ Ninguna.
 
 ## M1 - Base Next.js, TypeScript y despliegue
 
-**Estado:** En curso.
+**Estado:** Completado el 2026-08-27.
 
 ### Progreso actual
 
 - Tag remoto `prototype-v0.1.0` publicado.
 - Scaffold Next.js App Router y TypeScript creado en la raiz.
 - Lint, typecheck, tests y build configurados y verificados localmente.
-- CI de GitHub Actions incorporada.
+- CI de GitHub Actions incorporada y verificada en verde.
 - Variables publicas y estrategia de migraciones de Supabase documentadas.
-- Pendiente: enlazar el proyecto en Vercel y verificar un preview remoto.
+- Repositorio enlazado con Vercel y produccion accesible en https://recia.vercel.app.
+- Commit base `115cd26228b863e6625dde489c633855c3e63dee` desplegado y verificado.
 
 ### Objetivo
 
@@ -393,4 +394,4 @@ Estas lineas requieren nuevas decisiones y no deben retrasar los criterios de V1
 
 ## Proxima accion
 
-Completar M1 publicando el scaffold, verificar GitHub Actions en verde y enlazar el repositorio con Vercel para obtener un preview accesible. No iniciar M2 ni integrar OCR real hasta registrar esos resultados en el handoff.
+Iniciar M2 conectando Supabase para implementar Auth, organizaciones, membresias y RLS. No almacenar documentos ni integrar OCR real antes de verificar el aislamiento multi-tenant con tests negativos.
