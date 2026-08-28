@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <section className="authCard" aria-labelledby="login-title">
       <p className="eyebrow">Área de trabajo</p>
       <h1 id="login-title">Ingresá a RECIA</h1>
-      <p className="authLead">Usá la cuenta confirmada asociada a tus organizaciones.</p>
+      <p className="authLead">Usá la cuenta asociada a tus organizaciones.</p>
       {params.message ? <p className="formMessage success">{params.message}</p> : null}
       {params.error ? <p className="formMessage error">{params.error}</p> : null}
       <form action={signIn} className="authForm">

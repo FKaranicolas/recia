@@ -118,7 +118,19 @@ Crear una base productiva instalable, verificable y desplegable sin incorporar a
 
 ## M2 - Autenticacion, organizaciones y RLS
 
-**Estado:** Pendiente.
+**Estado:** Completado el 2026-08-28.
+
+### Resultado verificado
+
+- Supabase Auth con registro inmediato, login, logout y recuperacion de contrasena.
+- `profiles`, `organizations`, `organization_members` e invitaciones creadas por migraciones.
+- Propietario unico, transferencia atomica y roles de `DEC-014`.
+- Organizacion activa expresada en la URL y validada nuevamente por RLS.
+- Invitaciones bearer de 7 dias para operador o solo lectura, revocables por propietario o administrador.
+- Eliminacion inmediata de organizaciones por propietario y de cuentas sin organizaciones propias.
+- Topes antiabuso de 10 organizaciones activas por propietario y 30 invitaciones por organizacion/hora.
+- 35 pruebas pgTAP, incluidas mutaciones entre tenants, invitaciones, cuotas y borrados server-only.
+- Commit `1e8c18ac2539535d53622aa10a84517b7d996624` desplegado y CI en verde.
 
 ### Objetivo
 
@@ -156,6 +168,7 @@ Establecer identidad, membresias y aislamiento multi-tenant antes de almacenar c
 
 - Aceptadas: Supabase (`DEC-005`) y multi-tenancy con roles (`DEC-006`).
 - Aceptada: matriz conservadora de permisos (`DEC-014`).
+- Aceptadas: contrato Auth/invitaciones (`DEC-026`), propiedad y eliminacion M2 (`DEC-027`) y topes antiabuso (`DEC-028`).
 
 ## M3 - Archivo documental e ingesta
 
@@ -394,4 +407,4 @@ Estas lineas requieren nuevas decisiones y no deben retrasar los criterios de V1
 
 ## Proxima accion
 
-Iniciar M2 conectando Supabase para implementar Auth, organizaciones, membresias y RLS. No almacenar documentos ni integrar OCR real antes de verificar el aislamiento multi-tenant con tests negativos.
+Preparar M3 con un proyecto Supabase separado para produccion o staging, y luego implementar `documents`, Storage privado, validacion server-side y preservacion del original. No integrar OCR real antes de completar la ingesta segura.

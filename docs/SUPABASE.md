@@ -2,7 +2,7 @@
 
 ## Estado
 
-Este documento define la estrategia de M1. Supabase Auth, PostgreSQL, Storage y RLS se implementan desde M2; no estan conectados en el scaffold actual.
+Supabase Auth, PostgreSQL y RLS estan conectados desde M2. Storage privado comienza en M3. Las migraciones y `supabase/config.toml` son la fuente de verdad versionada.
 
 ## Ambientes
 
@@ -13,6 +13,8 @@ RECIA usara proyectos separados para:
 - Produccion.
 
 Cada ambiente tendra URL, publishable key y secretos propios. No se reutilizaran bases, buckets ni `service_role` entre ambientes.
+
+**Excepcion transitoria de M2:** la produccion publica usa actualmente el unico proyecto remoto `recia-dev`. Antes de almacenar comprobantes reales en M3 se debe crear el ambiente remoto dedicado y promover las migraciones y la configuracion versionadas.
 
 ## Variables
 
@@ -25,9 +27,21 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
 Las claves con privilegios, webhooks y secretos de proveedores seran variables server-only en Vercel. Nunca tendran prefijo `NEXT_PUBLIC_` ni se versionaran.
 
+M2 usa `SUPABASE_SECRET_KEY` solamente en acciones server-side de eliminacion, despues de reautenticar al usuario y volver a validar propiedad en PostgreSQL. La clave nueva `sb_secret_...` se gestiona como Sensitive en Vercel; las claves legacy quedaron deshabilitadas.
+
+## Auth e invitaciones
+
+- Registro por email y contrasena con acceso inmediato, sin confirmacion de casilla.
+- Contrasena minima de 8 caracteres, con mayuscula, minuscula y numero, sin maximo definido por RECIA.
+- Recuperacion mediante el proveedor de email incluido de Supabase.
+- Invitaciones manuales como secretos bearer de 256 bits, de un solo uso y con vencimiento de 7 dias.
+- El token viaja en fragmento URL, se elimina del historial y se conserva temporalmente en una cookie `HttpOnly`.
+- Una invitacion bearer solo otorga operador o solo lectura; propietario o administrador requieren promocion posterior.
+- La falta de confirmacion de email implica que la posesion del enlace, no el control de la casilla, es la garantia principal.
+
 ## Migraciones
 
-- `supabase/migrations/` sera la fuente de verdad del esquema desde M2.
+- `supabase/migrations/` es la fuente de verdad del esquema desde M2.
 - Cada cambio de tablas, funciones, indices, triggers o RLS se entregara como migracion SQL revisable.
 - No se aceptaran cambios manuales de produccion desde el dashboard sin una migracion equivalente.
 - Las migraciones se probaran primero en desarrollo, luego staging y finalmente produccion.
@@ -52,4 +66,14 @@ Las claves con privilegios, webhooks y secretos de proveedores seran variables s
 5. Aplicar en staging y ejecutar pruebas E2E.
 6. Aprobar y promover a produccion con backup verificado.
 
-Los comandos concretos de Supabase CLI se incorporaran en M2 junto con `supabase/config.toml`; M1 no instala el CLI ni crea proyectos remotos.
+Comandos principales:
+
+```bash
+npm run supabase:start
+npm run db:reset
+npm run db:test
+npx supabase db push
+npx supabase config push
+```
+
+GitHub Actions inicia un Supabase local limpio y ejecuta las pruebas pgTAP en cada push y pull request.

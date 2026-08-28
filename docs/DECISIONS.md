@@ -270,6 +270,36 @@ Fecha del registro inicial: 2026-08-26.
 - **Alternativas:** Proveedor generalista multimodal, parser especializado o combinacion con fallback.
 - **Revision futura:** Resolver despues del benchmark y registrar evidencia, version evaluada y fecha de reevaluacion.
 
+### DEC-026 - Registro, contrasenas e invitaciones de M2
+
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-28.
+- **Contexto:** M2 requiere acceso simple sin depender de la entrega de confirmaciones de Supabase, pero las invitaciones deben limitar escalamiento y fuga de secretos.
+- **Decision:** Usar email y contrasena con registro inmediato, sin confirmacion de casilla. Exigir al menos 8 caracteres, mayuscula, minuscula y numero, sin maximo definido por RECIA, y ofrecer recuperacion por email. Las invitaciones son enlaces bearer manuales de 256 bits, hasheados en base, de un solo uso y con 7 dias de validez. El fragmento URL no llega al servidor ni al referrer y se captura en cookie `HttpOnly`. El email de la cuenta debe coincidir con el indicado, aunque no prueba control de la casilla. Una invitacion solo otorga operador o solo lectura; administrador requiere promocion posterior.
+- **Consecuencias:** El registro y onboarding son mas simples. Quien obtenga el enlace y registre el email indicado puede aceptar la invitacion, por lo que debe compartirse como secreto. No incluir tokens en logs, mensajes publicos o herramientas de analitica.
+- **Alternativas:** Confirmacion obligatoria, OTP al aceptar o alta exclusiva de usuarios existentes.
+- **Revision futura:** Reconsiderar confirmacion u OTP al incorporar un proveedor transaccional confiable (`DEC-022`).
+
+### DEC-027 - Propiedad y eliminacion en M2
+
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-28.
+- **Contexto:** Se necesitan invariantes de propiedad y opciones de borrado antes de almacenar documentos.
+- **Decision:** Cada organizacion tiene exactamente un propietario activo. La transferencia es atomica y el propietario no puede abandonar la organizacion sin transferir. El propietario puede eliminar inmediatamente una organizacion escribiendo su nombre exacto. Una cuenta solo puede eliminarse despues de transferir o borrar todas sus organizaciones y revalidar su contrasena. Los RPC destructivos son ejecutables unicamente por `service_role` mediante `SUPABASE_SECRET_KEY` server-only; PostgreSQL vuelve a validar al solicitante.
+- **Consecuencias:** En M2 el borrado elimina perfil, membresias, organizacion e invitaciones. Ningun JWT de usuario puede invocar directamente los RPC destructivos. Esta decision no define retencion ni borrado de documentos futuros, que siguen pendientes en `DEC-021`.
+- **Alternativas:** Soft delete, espera de 7 dias o solicitud administrativa.
+- **Revision futura:** Reemplazar el borrado inmediato cuando M3 introduzca documentos sujetos a retencion y backups.
+
+### DEC-028 - Topes tecnicos antiabuso de M2
+
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-28.
+- **Contexto:** Los RPC autenticados pueden invocarse fuera de la interfaz y necesitan limites transaccionales antes de definir planes comerciales.
+- **Decision:** Limitar a 10 organizaciones activas por propietario y 30 invitaciones creadas por organizacion durante una hora. Aplicar los topes en triggers PostgreSQL serializados por advisory locks.
+- **Consecuencias:** Los limites no representan planes ni precios y no resuelven `DEC-020`; evitan crecimiento automatizado basico aun llamando Data API directamente.
+- **Alternativas:** Limites solo en Next.js, rate limiting externo o ausencia de topes hasta M7.
+- **Revision futura:** Ajustar junto con planes, telemetria y costos operativos.
+
 ## Decisiones reemplazadas
 
 No hay decisiones reemplazadas en este snapshot.

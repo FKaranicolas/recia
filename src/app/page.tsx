@@ -17,15 +17,21 @@ const milestones = [
     code: "M2",
     title: "Identidad y organizaciones",
     detail: "Supabase Auth, equipos, roles y aislamiento RLS.",
-    state: "En curso",
+    state: "Completado",
+  },
+  {
+    code: "M3",
+    title: "Ingesta segura",
+    detail: "Carga validada, Storage privado y originales inmutables.",
+    state: "Siguiente",
   },
 ] as const;
 
 const foundations = [
   ["Framework", "Next.js 16 + React 19"],
-  ["Lenguaje", "TypeScript estricto"],
-  ["Calidad", "ESLint + Vitest"],
-  ["CI", "GitHub Actions"],
+  ["Auth", "Supabase Auth"],
+  ["Tenancy", "PostgreSQL + RLS"],
+  ["Calidad", "Vitest + pgTAP"],
 ] as const;
 
 export default function Home() {
@@ -47,7 +53,7 @@ export default function Home() {
             Crear cuenta
           </Link>
           <span className="buildBadge">
-            <span aria-hidden="true" /> M2 EN CURSO
+            <span aria-hidden="true" /> M3 SIGUIENTE
           </span>
         </div>
       </header>
@@ -67,13 +73,13 @@ export default function Home() {
           <div className="notice" role="status">
             <strong>Estado actual</strong>
             <span>
-              Auth y organizaciones ya tienen una base verificable. El archivo documental
-              y el OCR real llegan en los proximos hitos; esta pantalla no procesa documentos.
+              M2 completo: Auth, organizaciones y aislamiento RLS estan verificados. El
+              archivo documental comienza en M3; esta pantalla no procesa documentos.
             </span>
           </div>
         </div>
 
-        <aside className="systemCard" aria-label="Base implementada en M1">
+        <aside className="systemCard" aria-label="Base implementada hasta M2">
           <div className="systemHead">
             <span>BASE IMPLEMENTADA</span>
             <span>V0.1</span>
@@ -89,7 +95,7 @@ export default function Home() {
               </div>
             ))}
           </dl>
-          <p>Supabase Auth y organizaciones avanzan en M2; documentos comienzan en M3.</p>
+          <p>Identidad y tenancy estan desplegados; documentos comienzan en M3.</p>
         </aside>
       </section>
 
