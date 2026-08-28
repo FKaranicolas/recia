@@ -18,7 +18,8 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
       <p className="eyebrow">Nueva cuenta</p>
       <h1 id="signup-title">Empezá con una base segura</h1>
       <p className="authLead">
-        Confirmaremos tu email antes de permitir acceso a una organización.
+        Tu cuenta queda disponible inmediatamente. Usá un email al que conserves acceso para
+        recuperar la contraseña.
       </p>
       {params.error ? <p className="formMessage error">{params.error}</p> : null}
       <form action={signUp} className="authForm">

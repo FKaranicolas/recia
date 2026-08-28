@@ -16,13 +16,12 @@ export function InvitationForm({ organizationId }: { organizationId: string }) {
     <form action={action} className="memberForm">
       <input name="organizationId" type="hidden" value={organizationId} />
       <label>
-        Email confirmado del destinatario
+        Email del destinatario
         <input name="email" required type="email" />
       </label>
       <label>
         Rol
         <select defaultValue="operator" name="role">
-          <option value="admin">Administrador</option>
           <option value="operator">Operador</option>
           <option value="viewer">Solo lectura</option>
         </select>

@@ -53,7 +53,7 @@ export async function signUp(formData: FormData) {
   const callbackPath = next
     ? `/auth/callback?next=${encodeURIComponent(next)}`
     : "/auth/callback?next=/onboarding";
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -70,6 +70,11 @@ export async function signUp(formData: FormData) {
         next,
       ),
     );
+  }
+
+  if (data.session) {
+    if (next) redirect(next);
+    redirect("/onboarding");
   }
 
   const params = new URLSearchParams({ message: "Revisá tu email para confirmar la cuenta." });

@@ -48,7 +48,8 @@ export default async function InvitationPage({ searchParams }: InvitationPagePro
         ) : (
           <>
             <p className="authLead">
-              Ingresá o creá una cuenta con el mismo email que recibió la invitación.
+              Ingresá o creá una cuenta con el mismo email indicado en la invitación. El
+              enlace de un solo uso es la credencial de acceso.
             </p>
             <div className="authActions">
               <Link className="primaryLink" href="/login?next=/invitations">

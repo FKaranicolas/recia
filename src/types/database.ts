@@ -112,6 +112,14 @@ export type Database = {
         };
         Returns: { expires_at: string; token: string }[];
       };
+      delete_account_as_admin: {
+        Args: { target_user_id: string };
+        Returns: undefined;
+      };
+      delete_organization_as_admin: {
+        Args: { requesting_user_id: string; target_organization_id: string };
+        Returns: undefined;
+      };
       list_organization_invitations: {
         Args: { target_organization_id: string };
         Returns: {

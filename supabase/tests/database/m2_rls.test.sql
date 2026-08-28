@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(26);
+select plan(35);
 
 select ok(
   (select relrowsecurity from pg_catalog.pg_class where oid = 'public.profiles'::regclass),
@@ -30,6 +30,42 @@ select ok(
   'invitation token hashes are not exposed through the API'
 );
 
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.delete_organization_as_admin(uuid, uuid)',
+    'EXECUTE'
+  ),
+  'authenticated users cannot call organization deletion directly'
+);
+
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.delete_account_as_admin(uuid)',
+    'EXECUTE'
+  ),
+  'authenticated users cannot call account deletion directly'
+);
+
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.delete_organization_as_admin(uuid, uuid)',
+    'EXECUTE'
+  ),
+  'the server role can execute organization deletion'
+);
+
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.delete_account_as_admin(uuid)',
+    'EXECUTE'
+  ),
+  'the server role can execute account deletion'
+);
+
 insert into auth.users (
   instance_id,
   id,
@@ -52,7 +88,8 @@ values
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'admin-a@example.com', '', now(), '{}', '{"display_name":"Admin A"}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 'operator-a@example.com', '', now(), '{}', '{"display_name":"Operator A"}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '20000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'owner-b@example.com', '', now(), '{}', '{"display_name":"Owner B"}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '30000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'outsider@example.com', '', now(), '{}', '{"display_name":"Outsider"}', now(), now(), '', '', '', '');
+  ('00000000-0000-0000-0000-000000000000', '30000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'outsider@example.com', '', now(), '{}', '{"display_name":"Outsider"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '30000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'unconfirmed@example.com', '', null, '{}', '{"display_name":"Unconfirmed"}', now(), now(), '', '', '', '');
 
 insert into public.organizations (id, name, created_by)
 values
@@ -257,6 +294,15 @@ values
     '20000000-0000-0000-0000-000000000001',
     now() + interval '1 day',
     now()
+  ),
+  (
+    'b0000000-0000-0000-0000-000000000001',
+    'unconfirmed@example.com',
+    'operator',
+    encode(extensions.digest(repeat('c', 64), 'sha256'), 'hex'),
+    '20000000-0000-0000-0000-000000000001',
+    now() + interval '1 day',
+    null
   );
 
 set local role authenticated;
@@ -274,6 +320,12 @@ select throws_ok(
   '22023',
   'Invitation is invalid or expired',
   'a revoked invitation cannot be accepted'
+);
+
+select set_config('request.jwt.claim.sub', '30000000-0000-0000-0000-000000000002', true);
+select lives_ok(
+  $$ select public.accept_organization_invitation(repeat('c', 64)) $$,
+  'an account can accept a bearer invitation without email confirmation'
 );
 
 select set_config('request.jwt.claim.sub', '30000000-0000-0000-0000-000000000001', true);
@@ -317,6 +369,43 @@ select throws_ok(
   'P0001',
   'An organization can create at most 30 invitations per hour',
   'a thirty-first invitation in one hour is blocked'
+);
+
+reset role;
+set local role service_role;
+
+select throws_ok(
+  $$
+    select public.delete_organization_as_admin(
+      'b0000000-0000-0000-0000-000000000001',
+      '10000000-0000-0000-0000-000000000001'
+    )
+  $$,
+  '42501',
+  'Only the owner can delete the organization',
+  'the server cannot delete an organization for a non-owner requester'
+);
+
+select throws_ok(
+  $$ select public.delete_account_as_admin('10000000-0000-0000-0000-000000000001') $$,
+  '23514',
+  'Owned organizations must be transferred or deleted first',
+  'an account that owns an organization cannot be deleted'
+);
+
+select lives_ok(
+  $$
+    select public.delete_organization_as_admin(
+      'a0000000-0000-0000-0000-000000000001',
+      '10000000-0000-0000-0000-000000000001'
+    )
+  $$,
+  'the server can delete an organization for its owner'
+);
+
+select lives_ok(
+  $$ select public.delete_account_as_admin('10000000-0000-0000-0000-000000000001') $$,
+  'an account without owned organizations can be deleted'
 );
 
 select * from finish();

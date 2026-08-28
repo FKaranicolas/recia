@@ -25,6 +25,7 @@ export default async function AppLayout({ children }: Readonly<{ children: React
         </Link>
         <div className="accountMenu">
           <span>{user.email}</span>
+          <Link href="/account">Cuenta</Link>
           <form action={signOut}>
             <button className="textButton" type="submit">
               Salir

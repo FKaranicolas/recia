@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { OrganizationRole } from "@/types/database";
 
@@ -13,6 +14,7 @@ export type InvitationState = {
 };
 
 const memberRoles: OrganizationRole[] = ["admin", "operator", "viewer"];
+const invitationRoles: OrganizationRole[] = ["operator", "viewer"];
 
 function field(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -32,7 +34,7 @@ export async function createInvitation(
   const email = field(formData, "email").toLowerCase();
   const role = field(formData, "role") as OrganizationRole;
 
-  if (!organizationId || !email.includes("@") || !memberRoles.includes(role)) {
+  if (!organizationId || !email.includes("@") || !invitationRoles.includes(role)) {
     return { error: "Revisá el email y el rol.", invitationUrl: null };
   }
 
@@ -119,4 +121,43 @@ export async function transferOwnership(formData: FormData) {
 
   if (error) redirect(organizationPath(organizationId, "No pudimos transferir la propiedad."));
   revalidatePath(`/organizations/${organizationId}`);
+}
+
+export async function deleteOrganization(formData: FormData) {
+  const organizationId = field(formData, "organizationId");
+  const confirmationEntry = formData.get("confirmation");
+  const confirmation = typeof confirmationEntry === "string" ? confirmationEntry : "";
+  const supabase = await createClient();
+  const { data: organization } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  if (!organization || confirmation !== organization.name) {
+    redirect(organizationPath(organizationId, "Escribí el nombre exacto de la organización."));
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("delete_organization_as_admin", {
+    requesting_user_id: user.id,
+    target_organization_id: organizationId,
+  });
+  if (error) redirect(organizationPath(organizationId, "No pudimos eliminar la organización."));
+
+  const { data: remainingOrganizations } = await supabase
+    .from("organizations")
+    .select("id")
+    .order("created_at")
+    .limit(1);
+
+  if (remainingOrganizations?.[0]) {
+    redirect(`/organizations/${remainingOrganizations[0].id}`);
+  }
+  redirect("/onboarding");
 }

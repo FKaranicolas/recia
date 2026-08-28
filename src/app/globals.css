@@ -576,6 +576,12 @@ button,
   font-size: 10px;
 }
 
+.accountMenu > a {
+  color: var(--green);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
 .textButton {
   padding: 0;
   background: transparent;
@@ -691,6 +697,77 @@ button,
   border: 1px solid var(--line);
   border-radius: 3px 20px 3px 20px;
   background: var(--surface);
+}
+
+.accountPanel {
+  width: min(920px, calc(100% - 40px));
+  margin: 64px auto 90px;
+}
+
+.accountPanel > h1 {
+  font-size: clamp(42px, 7vw, 72px);
+  letter-spacing: -0.055em;
+}
+
+.accountFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 30px 0;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.accountFacts > div {
+  padding: 20px;
+  background: var(--surface);
+}
+
+.accountFacts dt {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.accountFacts dd {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.dangerZone {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(300px, 1.2fr);
+  gap: 40px;
+  margin-top: 46px;
+  padding: clamp(24px, 4vw, 38px);
+  border: 1px solid #b55b4e;
+  border-radius: 3px 20px 3px 20px;
+  background: #fff8f5;
+}
+
+.dangerZone h2 {
+  margin-bottom: 12px;
+  font-size: clamp(26px, 4vw, 38px);
+  letter-spacing: -0.04em;
+}
+
+.dangerZone p:not(.eyebrow) {
+  color: #6f514b;
+  line-height: 1.6;
+}
+
+.dangerZone .authForm {
+  margin-top: 0;
+}
+
+.authForm > .dangerButton {
+  background: #8e372b;
+}
+
+.organizationDanger {
+  margin-top: 28px;
 }
 
 .sectionTitle h2,
@@ -834,6 +911,10 @@ button,
     grid-template-columns: 1fr;
   }
 
+  .dangerZone {
+    grid-template-columns: 1fr;
+  }
+
   .pendingInvites {
     grid-column: auto;
   }
@@ -933,6 +1014,10 @@ button,
   }
 
   .workspaceNotice {
+    grid-template-columns: 1fr;
+  }
+
+  .accountFacts {
     grid-template-columns: 1fr;
   }
 }

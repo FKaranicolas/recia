@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/supabase/user";
 import type { OrganizationRole } from "@/types/database";
 
 import {
+  deleteOrganization,
   removeMember,
   revokeInvitation,
   transferOwnership,
@@ -165,7 +166,10 @@ export default async function OrganizationPage({ params, searchParams }: Organiz
             <div>
               <p className="eyebrow">Acceso temporal</p>
               <h2 id="invite-title">Invitar integrante</h2>
-              <p>El destinatario debe confirmar el mismo email antes de aceptar.</p>
+              <p>
+                Compartí el enlace solo con el destinatario; podrá usarlo durante 7 días con
+                el mismo email indicado.
+              </p>
             </div>
             <InvitationForm organizationId={organizationId} />
             {invitations.length ? (
@@ -191,6 +195,29 @@ export default async function OrganizationPage({ params, searchParams }: Organiz
                 ))}
               </div>
             ) : null}
+          </section>
+        ) : null}
+
+        {currentMembership.role === "owner" ? (
+          <section className="dangerZone organizationDanger" aria-labelledby="delete-org-title">
+            <div>
+              <p className="eyebrow">Acción irreversible</p>
+              <h2 id="delete-org-title">Eliminar organización</h2>
+              <p>
+                Se borrarán definitivamente esta organización, sus membresías y sus
+                invitaciones. Escribí <strong>{organization.name}</strong> para confirmar.
+              </p>
+            </div>
+            <form action={deleteOrganization} className="authForm">
+              <input name="organizationId" type="hidden" value={organizationId} />
+              <label>
+                Nombre exacto
+                <input autoComplete="off" name="confirmation" required />
+              </label>
+              <button className="dangerButton" type="submit">
+                Eliminar organización definitivamente
+              </button>
+            </form>
           </section>
         ) : null}
       </section>
