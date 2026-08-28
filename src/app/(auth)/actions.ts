@@ -4,11 +4,17 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { safeNextPath } from "@/lib/navigation";
+import { isValidPassword, PASSWORD_HINT } from "@/lib/password";
 import { createClient } from "@/lib/supabase/server";
 
 function value(formData: FormData, field: string) {
   const entry = formData.get(field);
   return typeof entry === "string" ? entry.trim() : "";
+}
+
+function rawValue(formData: FormData, field: string) {
+  const entry = formData.get(field);
+  return typeof entry === "string" ? entry : "";
 }
 
 function authPath(path: "/login" | "/sign-up", message: string, next: string | null) {
@@ -20,7 +26,7 @@ function authPath(path: "/login" | "/sign-up", message: string, next: string | n
 export async function signUp(formData: FormData) {
   const displayName = value(formData, "displayName");
   const email = value(formData, "email").toLowerCase();
-  const password = value(formData, "password");
+  const password = rawValue(formData, "password");
   const next = safeNextPath(formData.get("next"));
 
   if (displayName.length < 2 || displayName.length > 100) {
@@ -31,16 +37,11 @@ export async function signUp(formData: FormData) {
     redirect(authPath("/sign-up", "Ingresá un email válido.", next));
   }
 
-  if (
-    password.length < 10 ||
-    !/[a-z]/.test(password) ||
-    !/[A-Z]/.test(password) ||
-    !/[0-9]/.test(password)
-  ) {
+  if (!isValidPassword(password)) {
     redirect(
       authPath(
         "/sign-up",
-        "La contraseña debe tener 10 caracteres, mayúscula, minúscula y número.",
+        PASSWORD_HINT,
         next,
       ),
     );
@@ -78,7 +79,7 @@ export async function signUp(formData: FormData) {
 
 export async function signIn(formData: FormData) {
   const email = value(formData, "email").toLowerCase();
-  const password = value(formData, "password");
+  const password = rawValue(formData, "password");
   const next = safeNextPath(formData.get("next"));
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -103,4 +104,43 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+export async function requestPasswordReset(formData: FormData) {
+  const email = value(formData, "email").toLowerCase();
+  if (!email.includes("@")) {
+    redirect("/forgot-password?error=Ingresá+un+email+válido.");
+  }
+
+  const requestHeaders = await headers();
+  const origin = requestHeaders.get("origin");
+  const supabase = await createClient();
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: origin ? `${origin}/auth/callback?next=/update-password` : undefined,
+  });
+
+  redirect(
+    "/login?message=Si+la+cuenta+existe,+vas+a+recibir+un+email+para+cambiar+la+contraseña.",
+  );
+}
+
+export async function updatePassword(formData: FormData) {
+  const password = rawValue(formData, "password");
+  if (!isValidPassword(password)) {
+    redirect(`/update-password?error=${encodeURIComponent(PASSWORD_HINT)}`);
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?error=El+enlace+de+recuperación+no+es+válido.");
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    redirect("/update-password?error=No+pudimos+actualizar+la+contraseña.");
+  }
+
+  await supabase.auth.signOut();
+  redirect("/login?message=Contraseña+actualizada.+Ya+podés+ingresar.");
 }

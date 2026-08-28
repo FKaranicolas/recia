@@ -31,6 +31,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </label>
         <button type="submit">Ingresar</button>
       </form>
+      <Link className="forgotLink" href="/forgot-password">
+        ¿Olvidaste tu contraseña?
+      </Link>
       <p className="authAlternative">
         ¿Todavía no tenés cuenta?{" "}
         <Link href={next ? `/sign-up?next=${encodeURIComponent(next)}` : "/sign-up"}>

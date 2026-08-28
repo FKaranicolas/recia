@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { safeNextPath } from "@/lib/navigation";
+import { PASSWORD_HINT } from "@/lib/password";
 
 import { signUp } from "../actions";
 
@@ -35,13 +36,13 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
           <input
             aria-describedby="password-help"
             autoComplete="new-password"
-            minLength={10}
+            minLength={8}
             name="password"
             required
             type="password"
           />
         </label>
-        <small id="password-help">10 caracteres, con mayúscula, minúscula y número.</small>
+        <small id="password-help">{PASSWORD_HINT}</small>
         <button type="submit">Crear cuenta</button>
       </form>
       <p className="authAlternative">

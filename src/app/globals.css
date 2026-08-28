@@ -529,6 +529,15 @@ button,
   text-underline-offset: 3px;
 }
 
+.forgotLink {
+  display: inline-block;
+  margin-top: 18px;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
 .formMessage {
   margin: 20px 0 0;
   padding: 12px 14px;
