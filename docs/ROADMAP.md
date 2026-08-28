@@ -21,7 +21,7 @@ Quedan fuera de V1 ARCA, integraciones contables, ingesta por email, aplicacion 
 
 `M0 -> M1 -> M2 -> M3 -> M4 -> M5 -> M6 -> M7`
 
-M3 y la preparacion del corpus de M4 pueden avanzar en paralelo despues de M2. M5 depende de un contrato fiscal acordado, aunque puede comenzar con resultados OCR simulados y tipados. M7 requiere que todos los controles de aislamiento y recuperacion hayan sido verificados.
+M3 y la preparacion del corpus de M4 pueden avanzar en paralelo despues de M2 y del gate de endurecimiento pre-M3 definido en la proxima accion. M5 depende de un contrato fiscal acordado, aunque puede comenzar con resultados OCR simulados y tipados. M7 requiere que todos los controles de aislamiento y recuperacion hayan sido verificados.
 
 La estimacion orientativa es de 6 a 8 semanas de implementacion sostenida. No es una fecha comprometida: depende del benchmark OCR, las decisiones pendientes y la disponibilidad de comprobantes anonimizados.
 
@@ -124,13 +124,13 @@ Crear una base productiva instalable, verificable y desplegable sin incorporar a
 
 - Supabase Auth con registro inmediato, login, logout y recuperacion de contrasena.
 - `profiles`, `organizations`, `organization_members` e invitaciones creadas por migraciones.
-- Propietario unico, transferencia atomica y roles de `DEC-014`.
+- Organizaciones creadas por RPC con propietario unico, transferencia atomica y roles de `DEC-014`.
 - Organizacion activa expresada en la URL y validada nuevamente por RLS.
 - Invitaciones bearer de 7 dias para operador o solo lectura, revocables por propietario o administrador.
 - Eliminacion inmediata de organizaciones por propietario y de cuentas sin organizaciones propias.
-- Topes antiabuso de 10 organizaciones activas por propietario y 30 invitaciones por organizacion/hora.
-- 35 pruebas pgTAP, incluidas mutaciones entre tenants, invitaciones, cuotas y borrados server-only.
-- Commit `1e8c18ac2539535d53622aa10a84517b7d996624` desplegado y CI en verde.
+- Tope de 10 organizaciones al crear y 30 invitaciones por organizacion/hora; la transferencia aun puede superar el primer tope.
+- 35 assertions pgTAP de esquema, privilegios, aislamiento, invitaciones, cuotas y borrados server-only sobre Supabase local limpio.
+- Cierre funcional `1e8c18ac2539535d53622aa10a84517b7d996624` y cierre documental `20b174065baf08c7d86185e6f2fce4bbbdc0c4b4` desplegados; CI final en verde.
 
 ### Objetivo
 
@@ -147,7 +147,7 @@ Establecer identidad, membresias y aislamiento multi-tenant antes de almacenar c
 - Tablas `profiles`, `organizations` y `organization_members`.
 - Seleccion de organizacion activa.
 - Roles propietario, administrador, operador y solo lectura.
-- Politicas RLS para cada operacion.
+- RLS, grants y RPC autorizados para cada operacion.
 - Flujo de alta o invitacion de miembros.
 - Tests negativos de acceso entre organizaciones.
 
@@ -181,7 +181,10 @@ Recibir documentos de forma segura, conservar el original y mantener un estado d
 ### Dependencias
 
 - M2 completado.
+- Gate de endurecimiento pre-M3 completado.
 - Limites de archivo acordados (`DEC-017`).
+- Ambiente remoto dedicado antes de desplegar M3 o crear sus recursos remotos; el desarrollo local con fixtures puede precederlo.
+- `DEC-021` resuelta antes de almacenar comprobantes reales; mientras siga pendiente, usar solo fixtures ficticios o anonimizados.
 
 ### Entregables
 
@@ -225,7 +228,7 @@ Elegir e integrar un proveedor a partir de evidencia sobre comprobantes argentin
 ### Dependencias
 
 - M2 completado para aislamiento.
-- M3 disponible para documentos reales.
+- M3 disponible con corpus anonimizado y `DEC-021` resuelta para cualquier documento real.
 - Protocolo de benchmark aprobado (`DEC-015`).
 - Cola asincrona seleccionada (`DEC-016`).
 
@@ -340,13 +343,13 @@ Entregar datos revisados en formatos utilizables por las PyMEs sin exponer infor
 - Aceptada: CSV y XLSX (`DEC-010`).
 - Pendiente: columnas, locale y limites (`DEC-019`).
 
-## M7 - Prueba publica y preparacion productiva
+## M7 - Prueba comercial y preparacion productiva
 
 **Estado:** Pendiente.
 
 ### Objetivo
 
-Abrir el registro publico con limites de costo, operacion recuperable y condiciones comerciales y legales explicitas.
+Incorporar prueba limitada, controles de costo, operacion recuperable y condiciones comerciales y legales explicitas sobre el registro tecnico ya existente.
 
 ### Dependencias
 
@@ -355,7 +358,7 @@ Abrir el registro publico con limites de costo, operacion recuperable y condicio
 
 ### Entregables
 
-- Registro publico y onboarding.
+- Onboarding comercial, elegibilidad y controles sobre el registro publico existente.
 - Prueba limitada y `usage_periods`.
 - Procedimiento de alta, renovacion, suspension y reactivacion manual.
 - Landing, precios, terminos y privacidad.
@@ -378,7 +381,8 @@ Abrir el registro publico con limites de costo, operacion recuperable y condicio
 
 - Costos unitarios desconocidos o margen negativo.
 - Procesamiento de datos fiscales sin acuerdos adecuados con proveedores.
-- Sobrecarga de soporte durante el registro publico.
+- Signup publico antes de CAPTCHA, observabilidad y rate limiting general.
+- Sobrecarga de soporte durante la prueba comercial.
 
 ### Decisiones relacionadas
 
@@ -407,4 +411,4 @@ Estas lineas requieren nuevas decisiones y no deben retrasar los criterios de V1
 
 ## Proxima accion
 
-Preparar M3 con un proyecto Supabase separado para produccion o staging, y luego implementar `documents`, Storage privado, validacion server-side y preservacion del original. No integrar OCR real antes de completar la ingesta segura.
+Antes de M3, corregir el bypass del tope de organizaciones por transferencia, cubrir la invariante de propietario ante inserts privilegiados y agregar sus pruebas. Luego separar el proyecto Supabase de produccion y resolver `DEC-021`; hasta entonces, cualquier trabajo de ingesta usara solo fixtures ficticios o anonimizados.

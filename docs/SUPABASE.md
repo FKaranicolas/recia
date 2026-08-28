@@ -14,7 +14,7 @@ RECIA usara proyectos separados para:
 
 Cada ambiente tendra URL, publishable key y secretos propios. No se reutilizaran bases, buckets ni `service_role` entre ambientes.
 
-**Excepcion transitoria de M2:** la produccion publica usa actualmente el unico proyecto remoto `recia-dev`. Antes de almacenar comprobantes reales en M3 se debe crear el ambiente remoto dedicado y promover las migraciones y la configuracion versionadas.
+**Excepcion transitoria de M2:** la produccion publica usa actualmente el unico proyecto remoto `recia-dev`. Antes de desplegar M3 o crear recursos remotos de ese hito se debe crear el ambiente dedicado y promover las migraciones y la configuracion versionadas. El desarrollo local puede usar fixtures ficticios despues del gate de endurecimiento pre-M3. Aun con ambientes separados, `DEC-021` prohibe almacenar comprobantes reales hasta definir retencion, borrado y backups.
 
 ## Variables
 
@@ -27,7 +27,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
 Las claves con privilegios, webhooks y secretos de proveedores seran variables server-only en Vercel. Nunca tendran prefijo `NEXT_PUBLIC_` ni se versionaran.
 
-M2 usa `SUPABASE_SECRET_KEY` solamente en acciones server-side de eliminacion, despues de reautenticar al usuario y volver a validar propiedad en PostgreSQL. La clave nueva `sb_secret_...` se gestiona como Sensitive en Vercel; las claves legacy quedaron deshabilitadas.
+M2 usa `SUPABASE_SECRET_KEY` solamente en acciones server-side de eliminacion. La cuenta se reautentica con contrasena en la accion Next.js; su RPC confia en el `target_user_id` enviado por esa accion y comprueba que no posea organizaciones. La organizacion exige nombre exacto y su RPC vuelve a validar que el solicitante sea propietario. La clave nueva `sb_secret_...` se gestiona como Sensitive en Vercel; las claves legacy quedaron deshabilitadas.
 
 ## Auth e invitaciones
 
@@ -35,7 +35,7 @@ M2 usa `SUPABASE_SECRET_KEY` solamente en acciones server-side de eliminacion, d
 - Contrasena minima de 8 caracteres, con mayuscula, minuscula y numero, sin maximo definido por RECIA.
 - Recuperacion mediante el proveedor de email incluido de Supabase.
 - Invitaciones manuales como secretos bearer de 256 bits, de un solo uso y con vencimiento de 7 dias.
-- El token viaja en fragmento URL, se elimina del historial y se conserva temporalmente en una cookie `HttpOnly`.
+- El fragmento no se envia automaticamente en la URL HTTP ni en el referrer. El cliente lo envia por POST same-origin y, si la captura funciona, limpia la URL y lo conserva temporalmente en una cookie `HttpOnly` con path `/`.
 - Una invitacion bearer solo otorga operador o solo lectura; propietario o administrador requieren promocion posterior.
 - La falta de confirmacion de email implica que la posesion del enlace, no el control de la casilla, es la garantia principal.
 
@@ -51,11 +51,11 @@ M2 usa `SUPABASE_SECRET_KEY` solamente en acciones server-side de eliminacion, d
 ## RLS y Storage
 
 - RLS estara habilitada en toda tabla expuesta por la API.
-- Las politicas validaran membresia y rol de la organizacion activa.
+- RLS limita lecturas por membresia y protege las mutaciones expuestas; las funciones privilegiadas vuelven a comprobar el rol requerido.
 - El bucket de documentos sera privado.
 - Las rutas de objetos comenzaran con un identificador de organizacion autorizado, sin CUIT ni datos fiscales en el nombre.
 - Las URLs firmadas tendran expiracion corta y se generaran despues de autorizar la operacion.
-- La `service_role` solo podra utilizarse en codigo server-side que haya validado usuario, organizacion y accion.
+- La `service_role` solo podra utilizarse en codigo server-side. Cada accion debe validar usuario y operacion antes de invocar un RPC privilegiado.
 
 ## Flujo de entrega
 
@@ -66,14 +66,27 @@ M2 usa `SUPABASE_SECRET_KEY` solamente en acciones server-side de eliminacion, d
 5. Aplicar en staging y ejecutar pruebas E2E.
 6. Aprobar y promover a produccion con backup verificado.
 
-Comandos principales:
+Flujo local reproducible:
 
 ```bash
 npm run supabase:start
 npm run db:reset
 npm run db:test
+npm run supabase:stop
+```
+
+Promocion remota manual, verificando siempre el proyecto destino:
+
+```bash
+npx supabase login
+SUPABASE_PROJECT_REF=valor-del-dashboard
+npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
+npx supabase migration list --linked
+npx supabase db push --dry-run
 npx supabase db push
 npx supabase config push
 ```
 
-GitHub Actions inicia un Supabase local limpio y ejecuta las pruebas pgTAP en cada push y pull request.
+GitHub Actions inicia un Supabase local limpio y ejecuta pgTAP en pushes a `main` y pull requests dirigidos a `main`. CI no promueve migraciones, no prueba la base hospedada y no bloquea actualmente el deployment automatico de Vercel.
+
+`src/types/database.ts` se mantiene manualmente. Antes de ampliar el esquema en M3 se debe incorporar generacion o un control de drift con `supabase gen types`.

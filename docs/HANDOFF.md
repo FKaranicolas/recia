@@ -9,10 +9,11 @@
 - **Commit de decisiones previo a M1:** `1b28124`
 - **Commit base desplegado para M1:** `115cd26228b863e6625dde489c633855c3e63dee`
 - **Commit funcional que cierra M2:** `1e8c18ac2539535d53622aa10a84517b7d996624`
+- **Commit de cierre documental M2 auditado:** `20b174065baf08c7d86185e6f2fce4bbbdc0c4b4`
 - **Commit que contiene este snapshot:** el commit documental que contiene este archivo; obtenerlo con `git log -1 --format=%H -- docs/HANDOFF.md`.
 - **Fecha del snapshot:** 2026-08-28
 - **Checkout usado para documentar:** `/home/kara96/code/recia`
-- **Fuentes canonicas:** este archivo, [DECISIONS.md](DECISIONS.md), [ROADMAP.md](ROADMAP.md), [SUPABASE.md](SUPABASE.md) y el codigo de `main`.
+- **Fuentes canonicas:** este archivo, [DECISIONS.md](DECISIONS.md), [ROADMAP.md](ROADMAP.md), [SUPABASE.md](SUPABASE.md), [API.md](API.md) y el codigo de `main`.
 
 El tag fijo reproduce la demo vanilla. La raiz de `main` contiene desde M1 la aplicacion Next.js; para determinar el estado exacto se debe revisar el `HEAD` actual y el commit que contiene este handoff.
 
@@ -20,7 +21,7 @@ El tag fijo reproduce la demo vanilla. La raiz de `main` contiene desde M1 la ap
 
 RECIA busca convertirse en un SaaS publico para PyMEs argentinas que cargue comprobantes, extraiga datos fiscales, permita revisarlos, archive los originales y exporte CSV/XLSX.
 
-El repositorio contiene Next.js 16, React 19 y TypeScript con Auth, organizaciones multi-tenant, cuatro roles, RLS, pruebas PostgreSQL, CI y despliegue continuo en Vercel. M2 esta completado y la pagina actual comunica que la ingesta documental comienza en M3. El prototipo anterior ya no esta en la raiz y se recupera por tag.
+El repositorio contiene Next.js 16, React 19 y TypeScript con Auth, organizaciones multi-tenant, cuatro roles, RLS, pruebas PostgreSQL, CI y despliegue continuo en Vercel. M2 cumple sus criterios de aceptacion y esta cerrado; un gate de endurecimiento pre-M3 debe resolver dos brechas adicionales antes de iniciar el siguiente hito. La pagina publica comunica correctamente que M3 es el proximo hito de producto. El prototipo anterior ya no esta en la raiz y se recupera por tag.
 
 La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabase Auth/PostgreSQL/Storage, organizaciones multi-tenant, RLS, procesamiento OCR asincrono y revision humana.
 
@@ -43,16 +44,16 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 - TypeScript estricto.
 - Pagina responsive de estado hasta M2 sin claims de funciones inexistentes.
 - ESLint 9 con reglas de Next.js.
-- Vitest, Testing Library y pruebas unitarias de pagina y autorizacion.
-- Scripts de lint, typecheck, test, build y verificacion completa.
-- GitHub Actions para ejecutar la cadena y 35 pruebas pgTAP sobre Supabase local.
+- Seis tests Vitest de pagina y utilidades de contrasena/redirect.
+- Scripts de lint, typecheck, test, build y verificacion de aplicacion.
+- GitHub Actions con jobs `verify` y `database`; este CI es informativo y no bloquea Vercel.
 - Supabase Auth con registro inmediato, login, logout y recuperacion de contrasena.
 - Perfiles, organizaciones, membresias, invitaciones manuales y cuatro roles.
-- Propietario unico, transferencia atomica y organizacion activa expresada en la URL.
+- Organizaciones creadas por RPC con propietario unico, transferencia atomica y organizacion activa expresada en la URL.
 - RLS y funciones `security definer` endurecidas y cubiertas por tests negativos entre tenants.
 - Invitaciones bearer de un solo uso, 7 dias y roles limitados a operador o solo lectura.
-- Topes de 10 organizaciones activas por propietario y 30 invitaciones por organizacion/hora.
-- Eliminacion inmediata y server-only de organizaciones y cuentas con reautenticacion.
+- Tope de 10 organizaciones al crear y 30 invitaciones por organizacion/hora; una transferencia puede superar el primer tope.
+- Eliminacion inmediata y server-only: nombre exacto para organizaciones y reautenticacion adicional para cuentas.
 - Contrato de variables publicas y `SUPABASE_SECRET_KEY` server-only en `.env.example`.
 - Migraciones, configuracion Auth y estrategia de Storage en `supabase/` y `docs/SUPABASE.md`.
 - Node 24.20.0 instalado localmente en WSL y fijado en `.nvmrc`; `package.json` exige Node 24 o superior.
@@ -60,7 +61,8 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 - Produccion de Vercel accesible en https://recia.vercel.app.
 - Commit base de M1 `115cd26228b863e6625dde489c633855c3e63dee` desplegado correctamente.
 - Cierre funcional M2 `1e8c18ac2539535d53622aa10a84517b7d996624` desplegado correctamente.
-- GitHub Actions verificado en verde para M2: https://github.com/FKaranicolas/recia/actions/runs/33176645565.
+- Cierre documental M2 `20b174065baf08c7d86185e6f2fce4bbbdc0c4b4` desplegado correctamente.
+- GitHub Actions final verificado en verde: https://github.com/FKaranicolas/recia/actions/runs/33177367678.
 
 ### No implementado
 
@@ -71,6 +73,7 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 - Exportaciones CSV/XLSX.
 - Auditoria general, backups, observabilidad y rate limiting general.
 - Tests E2E de navegador.
+- Tests de route handlers y server actions.
 - Flujos comerciales, privacidad, terminos y retencion.
 
 ## Inventario principal del repositorio
@@ -80,38 +83,43 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 | `src/app/layout.tsx` | Metadata, idioma y layout raiz. |
 | `src/app/page.tsx` | Pagina publica de estado hasta M2. |
 | `src/app/(auth)/` | Registro, login y recuperacion de acceso. |
-| `src/app/(app)/` | Onboarding, cuenta y administracion de organizaciones. |
+| `src/app/(app)/` | Onboarding, cuenta, administracion y control de acceso de rutas privadas. |
 | `src/lib/supabase/` | Clientes Supabase de navegador, SSR y administracion server-only. |
-| `src/proxy.ts` | Renovacion de sesion y proteccion de rutas. |
+| `src/proxy.ts` | Renovacion de cookies y sesion Supabase; no decide acceso a rutas privadas. |
 | `src/app/globals.css` | Sistema visual responsive de la pagina inicial. |
 | `src/app/page.test.tsx` | Pruebas de claims y secuencia de hitos. |
 | `supabase/migrations/` | Esquema, RLS, cuotas y funciones transaccionales de M2. |
-| `supabase/tests/database/` | Suite pgTAP de aislamiento, permisos y borrados. |
+| `supabase/tests/database/` | 35 assertions pgTAP de esquema, privilegios, aislamiento, invitaciones, cuotas y borrados. |
 | `.github/workflows/ci.yml` | Verificacion de aplicacion y base en GitHub. |
 | `.env.example` | Contrato de variables publicas y secreto server-only de Supabase. |
 | `package.json` | Versiones y comandos del proyecto. |
 | `docs/SUPABASE.md` | Estrategia de ambientes, migraciones, RLS y Storage. |
+| `docs/API.md` | Inventario interno de route handlers, lecturas Data API y RPC de M2. |
+| `docs/RELAY_PROMPT.md` | Prompt autocontenido para retomar desde otro equipo. |
 
 ## Como ejecutar y verificar M2
 
 ```bash
-git clone git@github.com:FKaranicolas/recia.git
+git clone https://github.com/FKaranicolas/recia.git
 cd recia
 npm ci
-npm run dev
+npm run supabase:start
+npx supabase status
 ```
 
-Abrir `http://localhost:3000`. Node 24 o superior es obligatorio.
+Crear `.env.local` con los valores locales impresos por Supabase y ejecutar `npm run dev`. Abrir `http://localhost:3000`; Mailpit esta en `http://localhost:54324`. Node 24, npm `11.19.0` y Docker o runtime compatible son la configuracion reproducible.
 
 La aplicacion necesita `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Las acciones destructivas tambien requieren `SUPABASE_SECRET_KEY` exclusivamente en el servidor.
 
 ```bash
 npm run verify
 npm run supabase:start
+npm run db:reset
 npm run db:test
+npm run supabase:stop
 ```
 
-`verify` ejecuta lint, typecheck, Vitest y el build de produccion. El job `database` de CI inicia Supabase local y ejecuta 35 asserts pgTAP. M2 fue verificado con Node `24.20.0`, npm `11.19.0`, 6 tests de aplicacion y 0 vulnerabilidades reportadas por `npm audit --audit-level=high`.
+`verify` cubre solamente la aplicacion: lint, typecheck, seis tests Vitest y build. La secuencia Supabase comprueba una base local limpia; `db:reset` borra datos locales. El job `database` de CI ejecuta 35 assertions pgTAP. El 2026-08-28 se observo `npm audit --audit-level=high` con 0 vulnerabilidades, pero audit no forma parte del workflow.
 
 La produccion publica esta disponible en https://recia.vercel.app. El 2026-08-28 se verifico registro con sesion inmediata y respuesta HTTP `200`; la cuenta descartable se elimino despues del smoke test.
 
@@ -120,7 +128,7 @@ La produccion publica esta disponible en https://recia.vercel.app. El 2026-08-28
 1. La pagina `/` muestra M0, M1 y M2 completados, con M3 como siguiente.
 2. Un visitante crea una cuenta y recibe una sesion inmediata, o inicia sesion y puede recuperar su contrasena.
 3. El usuario crea su primera organizacion o acepta un enlace de invitacion bearer.
-4. La organizacion activa queda en `/organizations/[organizationId]`; RLS vuelve a validar membresia y rol en cada acceso.
+4. La organizacion activa queda en `/organizations/[organizationId]`; RLS limita lecturas por membresia y los RPC vuelven a comprobar roles para operaciones privilegiadas.
 5. Propietarios y administradores gestionan equipo e invitaciones segun `DEC-014`.
 6. El propietario puede transferir propiedad o eliminar la organizacion; una cuenta sin organizaciones propias puede eliminarse tras reautenticacion.
 7. Un aviso explicito informa que archivo documental y OCR aun no funcionan.
@@ -305,7 +313,7 @@ Cuotas y consumo por organizacion y periodo para prueba y planes manuales.
 | Formatos | Limites decididos, sin upload | PDF/JPG/PNG/HEIC |
 | Exportacion | No existe | CSV/XLSX |
 | Operacion | CI local/GitHub y produccion en Vercel | Auditoria, backups y alertas |
-| Calidad | Lint, typecheck, unit, 35 asserts RLS y build | Unit, integration, RLS y E2E |
+| Calidad | Lint, typecheck, 6 tests Vitest, 35 assertions pgTAP y build | Unit, integration, RLS y E2E |
 
 ## Decisiones aceptadas
 
@@ -329,8 +337,8 @@ La fuente completa es [DECISIONS.md](DECISIONS.md). En resumen:
 - Prototipo preservado por el tag `prototype-v0.1.0` antes de reemplazar la raiz.
 - Registro inmediato sin confirmacion, recuperacion y contrasena minima reforzada.
 - Invitaciones bearer de 7 dias limitadas a operador o solo lectura.
-- Propietario unico y eliminaciones M2 ejecutadas solo desde servidor.
-- Topes tecnicos antiabuso de organizaciones e invitaciones.
+- Propietario unico en el flujo RPC y eliminaciones M2 ejecutadas solo desde servidor.
+- Topes tecnicos antiabuso, con bypass conocido del tope de organizaciones mediante transferencia.
 
 ## Decisiones resueltas hasta M2
 
@@ -357,28 +365,34 @@ No implementar una decision marcada como pendiente suponiendo una respuesta sile
 
 ## Hallazgos y riesgos conocidos
 
-1. La produccion publica apunta actualmente al unico proyecto remoto `recia-dev`; separar staging y produccion antes de almacenar comprobantes reales.
-2. La confirmacion de email esta deshabilitada. Una invitacion prueba posesion del enlace y coincidencia declarada del email, no control de la casilla; compartirla como secreto.
-3. La recuperacion depende por ahora del proveedor de email incluido de Supabase y sus limites; `DEC-022` sigue pendiente.
-4. `SUPABASE_SECRET_KEY` solo esta configurada en Vercel; para probar borrados localmente debe agregarse al entorno server-only sin versionarla.
-5. ESLint esta fijado en la ultima version 9 compatible porque un plugin transitivo de `eslint-config-next` falla con ESLint 10; revisar al actualizar Next.
-6. No hay licencia definida.
-7. Uploads, OCR, exportacion, auditoria general y backups siguen sin implementar y no deben simularse.
-8. Los defectos del prototipo (`localStorage`, importes decimales, notas de credito y carrera de captura) permanecen solo en el tag y no deben copiarse.
+1. `transfer_organization_ownership` no aplica el tope de 10 organizaciones al nuevo propietario; corregir y agregar pgTAP antes de M3.
+2. La invariante de propietario unico no cubre un insert privilegiado directo en `organizations`; prohibir esa ruta y endurecerla antes de M3.
+3. La produccion publica apunta al unico proyecto remoto `recia-dev`; separar ambientes antes de desplegar M3 o crear recursos remotos del hito.
+4. `DEC-021` sigue pendiente y bloquea comprobantes reales aun despues de separar ambientes. Usar solo fixtures ficticios o anonimizados.
+5. El signup tecnico ya es publico sin CAPTCHA, observabilidad ni rate limiting general; M7 agrega controles comerciales y operativos.
+6. Vercel despliega cada push a `main` sin esperar los jobs de CI. `main` no tiene checks requeridos y las migraciones/configuracion remotas se promueven manualmente.
+7. CI prueba migraciones y RLS sobre Supabase local limpio, no demuestra por si solo el estado de la base hospedada. Verificar el enlace y `migration list --linked` antes de operar remotamente.
+8. La confirmacion de email esta deshabilitada. Una invitacion prueba posesion del enlace y coincidencia declarada del email, no control de la casilla; compartirla como secreto.
+9. El RPC de borrado de cuenta confia en el usuario objetivo pasado por la accion server-side; la reautenticacion y vinculacion de identidad ocurren en Next.js, no dentro del RPC.
+10. Faltan E2E de navegador y tests de route handlers/server actions. Los tipos Supabase son manuales y no hay control de drift.
+11. La recuperacion depende del proveedor de email incluido de Supabase; `DEC-022` sigue pendiente.
+12. `SUPABASE_SECRET_KEY` solo esta configurada en Vercel; para probar borrados localmente debe agregarse al entorno server-only sin versionarla.
+13. ESLint esta fijado en 9 por incompatibilidad transitiva con ESLint 10. Las Actions v4 tambien reportan deuda por runtime Node 20 deprecado.
+14. No hay licencia definida.
+15. Uploads, OCR, exportacion, auditoria general y backups siguen sin implementar y no deben simularse.
+16. Los defectos del prototipo (`localStorage`, importes decimales, notas de credito y carrera de captura) permanecen solo en el tag y no deben copiarse.
 
 ## Proxima tarea recomendada
 
-Iniciar M3 de [ROADMAP.md](ROADMAP.md): separar el ambiente remoto que recibira datos reales y luego implementar ingesta validada, Storage privado y preservacion inmutable del original, sin integrar OCR todavia.
+Completar el gate de endurecimiento pre-M3: aplicar el tope de organizaciones durante transferencias, cubrir la creacion privilegiada de organizaciones sin propietario y agregar tests pgTAP negativos. M2 permanece cerrado y no se crean recursos de M3 en esta tarea.
 
 ## Definition of Done de la proxima tarea
 
-- Produccion y desarrollo no comparten datos fiscales reales.
-- Existen migraciones versionadas para documentos y metadatos de archivo con `organization_id` obligatorio.
-- Los originales se guardan en bucket privado con rutas y politicas por organizacion.
-- La validacion server-side aplica formatos y limites de `DEC-017` antes de persistir.
-- Hash e idempotencia evitan duplicar la misma carga y el original no se sobrescribe.
-- Solo miembros autorizados obtienen una URL firmada corta del original.
-- Tests negativos demuestran que ninguna ruta, query o politica permite acceso entre tenants.
+- Una transferencia a un usuario con 10 organizaciones falla sin cambiar propietarios ni roles.
+- Inserts privilegiados directos no pueden dejar una organizacion activa sin propietario.
+- pgTAP cubre ambas rutas y mantiene los 35 casos existentes.
+- El estado remoto enlazado se consulta sin aplicar cambios y se registra el ambiente destino.
+- No se crean tablas, buckets ni codigo de M3.
 - Verificacion local, GitHub Actions y deployment de Vercel finalizan correctamente.
 
 ## Como mantener este handoff
@@ -393,15 +407,7 @@ Iniciar M3 de [ROADMAP.md](ROADMAP.md): separar el ambiente remoto que recibira 
 
 ## Prompt reutilizable para una nueva conversacion
 
-```text
-Trabaja sobre RECIA usando docs/HANDOFF.md como snapshot operativo,
-docs/DECISIONS.md como fuente de decisiones y docs/ROADMAP.md para el orden
-de implementacion. Verifica primero rama, commit actual y diferencias contra
-el snapshot. No presentes la demo vanilla, el OCR simulado ni localStorage
-como componentes productivos. No resuelvas decisiones pendientes sin
-confirmacion. Antes de editar, inspecciona el codigo actual; al terminar,
-ejecuta las verificaciones del hito y actualiza el handoff.
-```
+Usar [RELAY_PROMPT.md](RELAY_PROMPT.md). Su primera fase es solo de verificacion del equipo nuevo y debe detenerse hasta recibir confirmacion explicita.
 
 ## Historial del handoff
 
@@ -416,3 +422,4 @@ ejecuta las verificaciones del hito y actualiza el handoff.
 | 2026-08-28 | `1258e5d` | Prueba negativa RLS corregida. |
 | 2026-08-28 | `c37e878` | Recuperacion de acceso y politica minima de contrasena. |
 | 2026-08-28 | `1e8c18a` | Registro inmediato y eliminacion segura; CI y produccion verificados. |
+| 2026-08-28 | `20b1740` | Cierre documental M2, portada M3 siguiente, CI y Vercel verificados. |

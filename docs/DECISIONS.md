@@ -216,7 +216,7 @@ Fecha del registro inicial: 2026-08-26.
 - **Fecha:** Pendiente.
 - **Contexto:** El cobro sera manual, pero faltan cuota gratuita, planes, moneda, precios y reglas de suspension.
 - **Decision pendiente:** Definir oferta comercial y limites de consumo.
-- **Consecuencias:** Bloquea onboarding publico y guardrails de costos de M7.
+- **Consecuencias:** El registro tecnico ya es publico desde M2. Esta decision bloquea la prueba comercial, sus cuotas, precios, suspension y guardrails de costos de M7.
 - **Alternativas:** Prueba por tiempo, por documentos o acceso aprobado manualmente.
 - **Revision futura:** Resolver con costos del benchmark antes de M7.
 
@@ -238,7 +238,7 @@ Fecha del registro inicial: 2026-08-26.
 - **Decision pendiente:** Seleccionar email transaccional, monitoreo de errores, metricas y alertas.
 - **Consecuencias:** Afecta onboarding, privacidad, subencargados y runbooks.
 - **Alternativas:** Servicios administrados compatibles con Vercel o capacidades incluidas en plataformas elegidas.
-- **Revision futura:** Resolver durante M1/M2 y antes de M7.
+- **Revision futura:** Diferida despues de M2; resolver antes de la apertura comercial de M7 y antes de depender del email para un flujo con SLO.
 
 ### DEC-023 - Migracion o archivo de la demo
 
@@ -275,7 +275,7 @@ Fecha del registro inicial: 2026-08-26.
 - **Estado:** Aceptada.
 - **Fecha:** 2026-08-28.
 - **Contexto:** M2 requiere acceso simple sin depender de la entrega de confirmaciones de Supabase, pero las invitaciones deben limitar escalamiento y fuga de secretos.
-- **Decision:** Usar email y contrasena con registro inmediato, sin confirmacion de casilla. Exigir al menos 8 caracteres, mayuscula, minuscula y numero, sin maximo definido por RECIA, y ofrecer recuperacion por email. Las invitaciones son enlaces bearer manuales de 256 bits, hasheados en base, de un solo uso y con 7 dias de validez. El fragmento URL no llega al servidor ni al referrer y se captura en cookie `HttpOnly`. El email de la cuenta debe coincidir con el indicado, aunque no prueba control de la casilla. Una invitacion solo otorga operador o solo lectura; administrador requiere promocion posterior.
+- **Decision:** Usar email y contrasena con registro inmediato, sin confirmacion de casilla. Exigir al menos 8 caracteres, mayuscula, minuscula y numero, sin maximo definido por RECIA, y ofrecer recuperacion por email. Las invitaciones son enlaces bearer manuales de 256 bits, hasheados en base, de un solo uso y con 7 dias de validez. El fragmento no se envia automaticamente en la URL HTTP ni en el referrer; el cliente lo captura, lo envia por POST same-origin y, si funciona, limpia la URL y lo conserva en cookie `HttpOnly`. El email de la cuenta debe coincidir con el indicado, aunque no prueba control de la casilla. Una invitacion solo otorga operador o solo lectura; administrador requiere promocion posterior.
 - **Consecuencias:** El registro y onboarding son mas simples. Quien obtenga el enlace y registre el email indicado puede aceptar la invitacion, por lo que debe compartirse como secreto. No incluir tokens en logs, mensajes publicos o herramientas de analitica.
 - **Alternativas:** Confirmacion obligatoria, OTP al aceptar o alta exclusiva de usuarios existentes.
 - **Revision futura:** Reconsiderar confirmacion u OTP al incorporar un proveedor transaccional confiable (`DEC-022`).
@@ -285,10 +285,10 @@ Fecha del registro inicial: 2026-08-26.
 - **Estado:** Aceptada.
 - **Fecha:** 2026-08-28.
 - **Contexto:** Se necesitan invariantes de propiedad y opciones de borrado antes de almacenar documentos.
-- **Decision:** Cada organizacion tiene exactamente un propietario activo. La transferencia es atomica y el propietario no puede abandonar la organizacion sin transferir. El propietario puede eliminar inmediatamente una organizacion escribiendo su nombre exacto. Una cuenta solo puede eliminarse despues de transferir o borrar todas sus organizaciones y revalidar su contrasena. Los RPC destructivos son ejecutables unicamente por `service_role` mediante `SUPABASE_SECRET_KEY` server-only; PostgreSQL vuelve a validar al solicitante.
-- **Consecuencias:** En M2 el borrado elimina perfil, membresias, organizacion e invitaciones. Ningun JWT de usuario puede invocar directamente los RPC destructivos. Esta decision no define retencion ni borrado de documentos futuros, que siguen pendientes en `DEC-021`.
+- **Decision:** Las organizaciones creadas por el RPC de aplicacion terminan con exactamente un propietario activo. La transferencia es atomica y el propietario no puede abandonar la organizacion sin transferir. Los inserts privilegiados directos en `organizations` quedan prohibidos hasta que la invariante cubra tambien esa ruta. El propietario puede eliminar inmediatamente una organizacion escribiendo su nombre exacto. Una cuenta solo puede eliminarse despues de transferir o borrar todas sus organizaciones y revalidar su contrasena. Los RPC destructivos son ejecutables unicamente por `service_role` mediante `SUPABASE_SECRET_KEY` server-only.
+- **Consecuencias:** El RPC de organizacion valida nuevamente que el solicitante sea propietario y el borrado en cascada elimina sus membresias e invitaciones. El RPC de cuenta confia en el usuario objetivo pasado por la accion server-side reautenticada, comprueba que no posea organizaciones, revoca invitaciones pendientes creadas por el usuario y elimina Auth/perfil/membresias; otras invitaciones pueden conservarse con referencias de actor en `NULL`. Ningun JWT de usuario puede invocar directamente los RPC destructivos. Esta decision no define retencion ni borrado de documentos futuros, que siguen pendientes en `DEC-021`.
 - **Alternativas:** Soft delete, espera de 7 dias o solicitud administrativa.
-- **Revision futura:** Reemplazar el borrado inmediato cuando M3 introduzca documentos sujetos a retencion y backups.
+- **Revision futura:** Resolver `DEC-021` y revisar este borrado antes de persistir comprobantes reales; M3 puede usar fixtures ficticios o anonimizados.
 
 ### DEC-028 - Topes tecnicos antiabuso de M2
 
@@ -296,7 +296,7 @@ Fecha del registro inicial: 2026-08-26.
 - **Fecha:** 2026-08-28.
 - **Contexto:** Los RPC autenticados pueden invocarse fuera de la interfaz y necesitan limites transaccionales antes de definir planes comerciales.
 - **Decision:** Limitar a 10 organizaciones activas por propietario y 30 invitaciones creadas por organizacion durante una hora. Aplicar los topes en triggers PostgreSQL serializados por advisory locks.
-- **Consecuencias:** Los limites no representan planes ni precios y no resuelven `DEC-020`; evitan crecimiento automatizado basico aun llamando Data API directamente.
+- **Consecuencias:** Los limites no representan planes ni precios y no resuelven `DEC-020`. La implementacion M2 limita a 10 solo al crear mediante `create_organization`; `transfer_organization_ownership` todavia puede dejar a un usuario con mas de 10 y debe endurecerse antes de M3. El tope de invitaciones si se aplica en base.
 - **Alternativas:** Limites solo en Next.js, rate limiting externo o ausencia de topes hasta M7.
 - **Revision futura:** Ajustar junto con planes, telemetria y costos operativos.
 

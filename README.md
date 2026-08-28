@@ -14,13 +14,22 @@ M1 y M2 incorporan:
 - React 19 y TypeScript estricto.
 - ESLint y Vitest con Testing Library.
 - Build estatico de la pagina inicial de estado.
-- CI en GitHub Actions para lint, typecheck, tests y build.
+- CI informativo en GitHub Actions para aplicacion y base; todavia no bloquea el deployment.
 - Despliegue continuo en Vercel: https://recia.vercel.app.
 - Supabase Auth con registro inmediato, login, logout y recuperacion de contrasena.
-- Organizaciones, propietario unico, cuatro roles y seleccion activa por URL.
+- Organizaciones creadas por RPC con propietario unico, cuatro roles y seleccion activa por URL.
 - Invitaciones bearer manuales de 7 dias para operador o solo lectura.
-- RLS y RPC protegidas, con 35 pruebas PostgreSQL de aislamiento y permisos.
-- Eliminacion inmediata de organizaciones y cuentas con reautenticacion.
+- RLS y RPC protegidas, con 35 assertions PostgreSQL de esquema, aislamiento, permisos y cuotas.
+- Eliminacion inmediata y server-only: la organizacion exige su nombre exacto y la cuenta tambien reautenticacion.
+
+Limitaciones conocidas antes de M3:
+
+- El tope de 10 organizaciones se aplica al crearlas, pero una transferencia puede superarlo.
+- La invariante de propietario unico depende del RPC de creacion y de no insertar organizaciones directamente con privilegios.
+- La produccion publica usa transitoriamente el proyecto remoto `recia-dev`.
+- `DEC-021` bloquea comprobantes reales hasta definir retencion, borrado y backups.
+
+M3 sigue siendo el proximo hito de producto, pero el gate operativo inmediato es corregir las dos brechas de organizaciones anteriores y ampliar pgTAP sin crear recursos de M3.
 
 Todavia no estan implementados:
 
@@ -31,20 +40,24 @@ Todavia no estan implementados:
 
 ## Requisitos
 
-- Node.js 24 o superior.
-- npm 11 o superior.
+- Node.js 24 o superior; `.nvmrc` fija `24.20.0`.
+- npm `11.19.0` recomendado para reproducibilidad.
+- Docker o un runtime compatible para Supabase local.
+- Git. El repositorio publico puede clonarse por HTTPS sin configurar una clave SSH.
 
 Las versiones de dependencias quedan fijadas en `package-lock.json`.
 
 ## Instalacion
 
 ```bash
-git clone git@github.com:FKaranicolas/recia.git
+git clone https://github.com/FKaranicolas/recia.git
 cd recia
 npm ci
+npm run supabase:start
+npx supabase status
 ```
 
-Crear `.env.local` a partir de `.env.example`. La clave `SUPABASE_SECRET_KEY` es server-only y solo se necesita para eliminaciones; nunca debe exponerse al navegador.
+Crear `.env.local` a partir de `.env.example` y completar los valores locales impresos por Supabase. La clave `SUPABASE_SECRET_KEY` es server-only y solo se necesita para eliminaciones; nunca debe exponerse al navegador. Los emails locales se inspeccionan en `http://localhost:54324`.
 
 ## Desarrollo
 
@@ -56,21 +69,28 @@ Abrir `http://localhost:3000`.
 
 ## Verificaciones
 
-Ejecutar toda la cadena local:
+Ejecutar la cadena de aplicacion:
 
 ```bash
 npm run verify
 ```
 
-Comandos individuales:
+Verificar tambien una base local limpia; `db:reset` elimina los datos locales:
+
+```bash
+npm run supabase:start
+npm run db:reset
+npm run db:test
+npm run supabase:stop
+```
+
+Comandos de aplicacion individuales:
 
 ```bash
 npm run lint
 npm run typecheck
 npm test
 npm run build
-npm run supabase:start
-npm run db:test
 ```
 
 Modo interactivo de tests:
@@ -106,7 +126,7 @@ vitest.config.ts          Configuracion de tests
 
 ## Despliegue
 
-La aplicacion esta enlazada con Vercel y disponible en https://recia.vercel.app. Cada cambio publicado en `main` genera un deployment de produccion. Las variables publicas y `SUPABASE_SECRET_KEY` estan configuradas por ambiente; ningun secreto esta versionado.
+La aplicacion esta enlazada con Vercel y disponible en https://recia.vercel.app. Cada cambio publicado en `main` genera un deployment de produccion, actualmente sin esperar a que GitHub Actions termine. Las migraciones y `supabase/config.toml` se promueven manualmente. Las variables publicas y `SUPABASE_SECRET_KEY` estan configuradas en Vercel; ningun secreto esta versionado.
 
 ## Alcance de V1
 
@@ -126,6 +146,8 @@ ARCA, integraciones contables, ingesta por email, app movil nativa, billing auto
 - [Decisiones](docs/DECISIONS.md)
 - [Handoff operativo](docs/HANDOFF.md)
 - [Estrategia de Supabase](docs/SUPABASE.md)
+- [Superficie HTTP y RPC](docs/API.md)
+- [Prompt de relevo](docs/RELAY_PROMPT.md)
 
 ## Licencia
 
