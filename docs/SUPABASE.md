@@ -2,7 +2,7 @@
 
 ## Estado
 
-Supabase Auth, PostgreSQL y RLS estan conectados desde M2. Storage privado comienza en M3. Las migraciones y `supabase/config.toml` son la fuente de verdad versionada.
+Supabase Auth, PostgreSQL y RLS estan conectados desde M2. El Storage privado de M3 esta implementado y probado localmente; sus recursos remotos no se crean hasta completar el gate de endurecimiento pre-M3 y separar el ambiente. Las migraciones y `supabase/config.toml` son la fuente de verdad versionada.
 
 ## Ambientes
 
@@ -52,10 +52,26 @@ M2 usa `SUPABASE_SECRET_KEY` solamente en acciones server-side de eliminacion. L
 
 - RLS estara habilitada en toda tabla expuesta por la API.
 - RLS limita lecturas por membresia y protege las mutaciones expuestas; las funciones privilegiadas vuelven a comprobar el rol requerido.
-- El bucket de documentos sera privado.
-- Las rutas de objetos comenzaran con un identificador de organizacion autorizado, sin CUIT ni datos fiscales en el nombre.
-- Las URLs firmadas tendran expiracion corta y se generaran despues de autorizar la operacion.
+- Los buckets de documentos son privados.
+- Las rutas de objetos comienzan con un identificador de organizacion autorizado, sin CUIT ni datos fiscales en el nombre.
+- Las URLs firmadas tienen expiracion corta y se generan despues de autorizar la operacion.
 - La `service_role` solo podra utilizarse en codigo server-side. Cada accion debe validar usuario y operacion antes de invocar un RPC privilegiado.
+
+### Buckets de M3
+
+| Bucket | Contenido | Ruta | Limite |
+|---|---|---|---|
+| `documents` | Original inmutable | `{organization_id}/{document_id}/original` | 20 MB, PDF/JPG/PNG/HEIC |
+| `document-derivatives` | Miniatura, conversion HEIC y pagina renderizada | `{organization_id}/{document_id}/{kind}[-p{n}].{ext}` | 5 MB, JPG/PNG/WebP |
+
+Politicas sobre `storage.objects`:
+
+- Lectura en ambos buckets para integrantes activos de la organizacion que encabeza la ruta.
+- Escritura en `documents` solo para propietario, administrador u operador, y unicamente sobre la ruta exacta que una fila `documents` en estado `uploading` haya reservado. Una URL firmada valida no alcanza para escribir en otra ubicacion.
+- Sin politicas de actualizacion o borrado para usuarios autenticados: la limpieza de rechazos y huerfanos y la escritura de derivados corren server-side con `SUPABASE_SECRET_KEY`.
+- El primer segmento de la ruta se convierte a `uuid` mediante `app_private.storage_organization_id`, que devuelve `null` ante cualquier valor que no sea un identificador valido.
+
+Las URLs firmadas de descarga del original duran 60 segundos y se emiten con el cliente del usuario, de modo que RLS vuelve a decidir el acceso. Estos buckets y sus politicas se crean por migracion, de modo que su promocion remota queda sujeta al gate y a la separacion de ambientes.
 
 ## Flujo de entrega
 

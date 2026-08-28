@@ -172,7 +172,26 @@ Establecer identidad, membresias y aislamiento multi-tenant antes de almacenar c
 
 ## M3 - Archivo documental e ingesta
 
-**Estado:** Pendiente.
+**Estado:** En curso desde 2026-08-28.
+
+### Progreso actual
+
+La ingesta esta implementada y verificada localmente, pero el hito no puede cerrarse: el gate de endurecimiento pre-M3 sigue abierto y sus recursos remotos no deben crearse antes de separar el ambiente.
+
+- Tablas `documents` y `document_derivatives` con `organization_id` obligatorio, RLS y escritura unicamente por RPC `security definer`.
+- Buckets privados `documents` y `document-derivatives` con politicas por organizacion; la escritura exige la ruta exacta que reservo una carga pendiente.
+- Carga mediante URL firmada de subida, porque el limite de cuerpo de una funcion serverless no admite los 20 MB de `DEC-017`.
+- Validacion server-side sobre los bytes almacenados: magic bytes, discordancia con el tipo declarado, dimensiones, megapixeles, paginas, PDF cifrado y transferencias truncadas.
+- Hash SHA-256, deduplicacion por organizacion y expiracion de cargas abandonadas a los 30 minutos.
+- Miniatura WebP, conversion HEIC a JPEG y render de la primera pagina del PDF como derivados best-effort en bucket separado.
+- Descarga del original mediante URL firmada de 60 segundos.
+- 41 assertions pgTAP de M3 sobre las 35 de M2, y una suite de validacion con un fixture por formato aceptado.
+
+Pendiente para cerrar el hito:
+
+- Gate de endurecimiento pre-M3.
+- Ambiente remoto dedicado y promocion de las migraciones.
+- `DEC-021` resuelta antes de recibir comprobantes reales.
 
 ### Objetivo
 
@@ -411,4 +430,4 @@ Estas lineas requieren nuevas decisiones y no deben retrasar los criterios de V1
 
 ## Proxima accion
 
-Antes de M3, corregir el bypass del tope de organizaciones por transferencia, cubrir la invariante de propietario ante inserts privilegiados y agregar sus pruebas. Luego separar el proyecto Supabase de produccion y resolver `DEC-021`; hasta entonces, cualquier trabajo de ingesta usara solo fixtures ficticios o anonimizados.
+Corregir el bypass del tope de organizaciones por transferencia, cubrir la invariante de propietario ante inserts privilegiados y agregar sus pruebas. Ese gate se entrega por separado y precede al merge de la ingesta de M3, que ya esta implementada y en revision. Luego separar el proyecto Supabase de produccion y resolver `DEC-021`; hasta entonces, cualquier trabajo de ingesta usara solo fixtures ficticios o anonimizados.

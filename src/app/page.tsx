@@ -23,7 +23,13 @@ const milestones = [
     code: "M3",
     title: "Ingesta segura",
     detail: "Carga validada, Storage privado y originales inmutables.",
-    state: "Siguiente",
+    state: "En curso",
+  },
+  {
+    code: "M4",
+    title: "Extraccion OCR",
+    detail: "Benchmark reproducible y adaptador server-side del proveedor.",
+    state: "Pendiente",
   },
 ] as const;
 
@@ -31,6 +37,7 @@ const foundations = [
   ["Framework", "Next.js 16 + React 19"],
   ["Auth", "Supabase Auth"],
   ["Tenancy", "PostgreSQL + RLS"],
+  ["Archivo", "Storage privado + SHA-256"],
   ["Calidad", "Vitest + pgTAP"],
 ] as const;
 
@@ -53,7 +60,7 @@ export default function Home() {
             Crear cuenta
           </Link>
           <span className="buildBadge">
-            <span aria-hidden="true" /> M3 SIGUIENTE
+            <span aria-hidden="true" /> M3 EN CURSO
           </span>
         </div>
       </header>
@@ -73,8 +80,9 @@ export default function Home() {
           <div className="notice" role="status">
             <strong>Estado actual</strong>
             <span>
-              M2 completo: Auth, organizaciones y aislamiento RLS estan verificados. El
-              archivo documental comienza en M3; esta pantalla no procesa documentos.
+              M2 completo y M3 en curso: la ingesta valida el archivo en el servidor,
+              conserva el original en un bucket privado y registra su hash, pero todavia
+              no esta desplegada. Esta pantalla no procesa documentos.
             </span>
           </div>
         </div>
@@ -95,7 +103,7 @@ export default function Home() {
               </div>
             ))}
           </dl>
-          <p>Identidad y tenancy estan desplegados; documentos comienzan en M3.</p>
+          <p>Identidad y tenancy estan desplegados; el archivo documental esta en revision.</p>
         </aside>
       </section>
 

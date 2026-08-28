@@ -84,6 +84,13 @@ export default async function OrganizationPage({ params, searchParams }: Organiz
             </Link>
           ))}
         </nav>
+        <p className="eyebrow railDivider">Secciones</p>
+        <nav aria-label="Secciones de la organización">
+          <Link aria-current="page" href={`/organizations/${organizationId}`}>
+            Equipo
+          </Link>
+          <Link href={`/organizations/${organizationId}/documents`}>Documentos</Link>
+        </nav>
       </aside>
 
       <section className="organizationMain">
@@ -99,8 +106,9 @@ export default async function OrganizationPage({ params, searchParams }: Organiz
         <section className="workspaceNotice">
           <strong>Aislamiento activo</strong>
           <p>
-            Las membresías y políticas RLS limitan este espacio. Documentos y OCR llegan en
-            los próximos hitos.
+            Las membresías y políticas RLS limitan este espacio. El archivo documental ya
+            recibe comprobantes en <Link href={`/organizations/${organizationId}/documents`}>Documentos</Link>;
+            la extracción automática de datos llega en el próximo hito.
           </p>
         </section>
 

@@ -300,6 +300,16 @@ Fecha del registro inicial: 2026-08-26.
 - **Alternativas:** Limites solo en Next.js, rate limiting externo o ausencia de topes hasta M7.
 - **Revision futura:** Ajustar junto con planes, telemetria y costos operativos.
 
+### DEC-029 - Contrato de ingesta documental de M3
+
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-28.
+- **Contexto:** `DEC-007` y `DEC-017` fijan formatos y limites, pero no como entra el archivo ni quien lo valida. Vercel limita el cuerpo de una funcion serverless a aproximadamente 4,5 MB, mientras que `DEC-017` acepta PDF de hasta 20 MB, de modo que el archivo no puede atravesar el servidor de la aplicacion.
+- **Decision:** La carga usa una URL firmada de subida. El servidor autoriza rol y limites declarados, reserva una fila `documents` en estado `uploading` y emite la URL; el navegador sube directo al bucket privado; despues el servidor vuelve a leer los bytes almacenados, verifica magic bytes, dimensiones, paginas y cifrado, calcula SHA-256 y recien entonces confirma el documento. El tipo declarado por el cliente es solo una pista: nunca se persiste sin verificacion. Un archivo rechazado no deja fila ni objeto. La deduplicacion es por organizacion y checksum sobre documentos archivados. Las cargas interrumpidas expiran a los 30 minutos y sus objetos se eliminan con la clave server-only. Los derivados (miniatura, conversion HEIC y primera pagina de PDF) se generan aparte, en modo best-effort, y se guardan en un bucket propio.
+- **Consecuencias:** `SUPABASE_SECRET_KEY` pasa a ser necesaria tambien para la ingesta, porque el bucket no otorga borrado a usuarios autenticados. La generacion de derivados no introduce una cola: `DEC-016` sigue pendiente y un fallo de conversion solo marca `derivative_status`, sin afectar el original. La verificacion posterior a la subida implica que un archivo invalido consume trafico de Storage antes de ser rechazado, no cuota de OCR.
+- **Alternativas:** Subida a traves de un route handler propio, limitada a 4,5 MB e incompatible con `DEC-017`; validacion unicamente en el cliente; o validacion diferida al worker de OCR.
+- **Revision futura:** Revisar cuando `DEC-016` defina la cola, para mover la generacion de derivados a trabajos durables junto con el procesamiento OCR.
+
 ## Decisiones reemplazadas
 
 No hay decisiones reemplazadas en este snapshot.

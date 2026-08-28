@@ -1,6 +1,6 @@
 # RECIA
 
-> Estado: M2 completado. Auth, organizaciones, roles y RLS estan desplegados; documentos y OCR todavia no existen.
+> Estado: M2 completado y M3 en curso. Auth, organizaciones, roles y RLS estan desplegados; la ingesta documental esta implementada y en revision, pendiente del gate de endurecimiento pre-M3 y del ambiente dedicado. El OCR todavia no existe.
 
 RECIA sera un SaaS para que PyMEs argentinas carguen comprobantes, extraigan datos fiscales, revisen los resultados, conserven los originales y exporten informacion administrativa.
 
@@ -22,6 +22,15 @@ M1 y M2 incorporan:
 - RLS y RPC protegidas, con 35 assertions PostgreSQL de esquema, aislamiento, permisos y cuotas.
 - Eliminacion inmediata y server-only: la organizacion exige su nombre exacto y la cuenta tambien reautenticacion.
 
+M3 agrega, implementado y verificado localmente pero todavia sin desplegar:
+
+- Carga de PDF, JPG, PNG y HEIC mediante URL firmada de subida directa al bucket privado.
+- Validacion server-side contra los bytes almacenados: formato real, dimensiones, megapixeles, paginas, PDF cifrado y transferencias truncadas.
+- Original inmutable con hash SHA-256 y deduplicacion por organizacion.
+- Miniaturas, conversion HEIC y render de la primera pagina del PDF en un bucket separado.
+- Descarga del original mediante URL firmada de corta duracion.
+- 41 assertions PostgreSQL adicionales de aislamiento e ingesta.
+
 Limitaciones conocidas antes de M3:
 
 - El tope de 10 organizaciones se aplica al crearlas, pero una transferencia puede superarlo.
@@ -29,11 +38,10 @@ Limitaciones conocidas antes de M3:
 - La produccion publica usa transitoriamente el proyecto remoto `recia-dev`.
 - `DEC-021` bloquea comprobantes reales hasta definir retencion, borrado y backups.
 
-M3 sigue siendo el proximo hito de producto, pero el gate operativo inmediato es corregir las dos brechas de organizaciones anteriores y ampliar pgTAP sin crear recursos de M3.
+El gate operativo inmediato sigue siendo corregir las dos brechas de organizaciones anteriores y ampliar pgTAP. M3 no debe desplegarse ni crear recursos remotos antes de completar ese gate y separar el ambiente.
 
 Todavia no estan implementados:
 
-- Carga y archivo de documentos.
 - OCR/IA real.
 - Exportaciones CSV/XLSX.
 - Cobro o planes.
@@ -57,7 +65,7 @@ npm run supabase:start
 npx supabase status
 ```
 
-Crear `.env.local` a partir de `.env.example` y completar los valores locales impresos por Supabase. La clave `SUPABASE_SECRET_KEY` es server-only y solo se necesita para eliminaciones; nunca debe exponerse al navegador. Los emails locales se inspeccionan en `http://localhost:54324`.
+Crear `.env.local` a partir de `.env.example` y completar los valores locales impresos por Supabase. La clave `SUPABASE_SECRET_KEY` es server-only y se necesita para eliminaciones, para limpiar objetos rechazados o huerfanos y para escribir derivados; nunca debe exponerse al navegador. Los emails locales se inspeccionan en `http://localhost:54324`.
 
 ## Desarrollo
 
@@ -111,12 +119,31 @@ SUPABASE_SECRET_KEY=
 
 `SUPABASE_SECRET_KEY` debe usar la clave nueva `sb_secret_...`, permanecer solo en servidor y gestionarse como Sensitive en Vercel. No agregar claves OCR ni otros secretos con prefijo `NEXT_PUBLIC_`.
 
+## Carga de documentos
+
+Cada organizacion tiene su archivo en `/organizations/[organizationId]/documents`.
+
+- Formatos aceptados: PDF de hasta 20 MB y 10 paginas; JPG, PNG y HEIC de hasta 10 MB y 40 megapixeles.
+- El navegador sube el archivo directo a un bucket privado mediante una URL firmada; el servidor vuelve a leer los bytes almacenados y verifica formato real, dimensiones, paginas y cifrado antes de archivarlo.
+- El original nunca se modifica: se conserva tal cual, con su hash SHA-256. Miniaturas y conversiones viven en un bucket aparte.
+- Un archivo invalido, duplicado o interrumpido no deja registro ni objeto.
+- Propietario, administrador y operador pueden cargar; el rol de solo lectura ve y descarga.
+- Mientras `DEC-021` siga pendiente, usar unicamente comprobantes ficticios o anonimizados.
+
+Los fixtures de prueba se regeneran con:
+
+```bash
+node scripts/generate-document-fixtures.mjs
+```
+
 ## Estructura
 
 ```text
 .github/workflows/ci.yml  Verificaciones de integracion continua
-docs/                     Roadmap, decisiones y handoff
+docs/                     Roadmap, decisiones, superficie HTTP y handoff
+scripts/                  Utilidades de desarrollo
 src/app/                  App Router, estilos y pruebas
+src/lib/documents/        Limites, validacion y derivados de la ingesta
 supabase/                 Configuracion, migraciones y pruebas RLS
 .env.example              Contrato de variables Supabase
 eslint.config.mjs         Reglas de lint
