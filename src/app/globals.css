@@ -356,7 +356,8 @@ li[data-state="En curso"] .state {
   color: #7e480a;
 }
 
-li[data-state="Siguiente"] .state {
+li[data-state="Siguiente"] .state,
+li[data-state="Pendiente"] .state {
   background: #eceee9;
   color: #4e5b55;
 }

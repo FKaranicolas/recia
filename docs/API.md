@@ -1,4 +1,4 @@
-# Superficie HTTP y RPC de M2
+# Superficie HTTP y RPC de M2 y M3
 
 Este inventario describe la superficie interna usada por la aplicacion. No es una API publica ni versionada para integradores externos. Las acciones de formulario de Next.js tambien son internas y no deben invocarse como endpoints estables.
 
@@ -32,6 +32,25 @@ Content-Type: application/json
 
 {"captured":true}
 ```
+
+### `GET /api/documents/{documentId}/download`
+
+Disponible en la rama de M3.
+
+- Requiere sesion. Devuelve `401` sin usuario.
+- RLS decide la visibilidad: un documento de otra organizacion responde `404`, igual que uno inexistente.
+- Exito: redirect `307` a una URL firmada de 60 segundos con `download` fijado al nombre original.
+- Error `404`: `{ "error": "Documento no encontrado." }`.
+- Error `502`: `{ "error": "No pudimos preparar la descarga." }`.
+
+### `POST /api/documents/{documentId}/derivatives`
+
+Disponible en la rama de M3. Genera miniatura, conversion HEIC y render de la primera pagina del PDF.
+
+- Requiere sesion y rol `owner`, `admin` u `operator`; devuelve `403` para solo lectura.
+- Exito `200`: `{ "status": "ready", "count": <n> }`.
+- Fallo de conversion `200`: `{ "status": "failed" }`. El original nunca se modifica; solo cambia `derivative_status`.
+- Error `503`: `{ "error": "La generacion de vistas previas no esta configurada." }` cuando falta `SUPABASE_SECRET_KEY`.
 
 ### `GET /auth/callback`
 
@@ -87,6 +106,18 @@ Todos usan `POST /rest/v1/rpc/<funcion>`, `apikey: PUBLISHABLE_KEY`, `Authorizat
 | `remove_organization_member` | `{ "target_organization_id": "UUID", "target_user_id": "UUID" }` | Propietario o administrador; no permite remover al propietario. |
 | `transfer_organization_ownership` | `{ "target_organization_id": "UUID", "next_owner_id": "UUID" }` | Solo propietario actual; tiene pendiente aplicar el tope al receptor. |
 
+RPC agregados en la rama de M3:
+
+| Funcion | Body JSON | Autorizacion principal |
+|---|---|---|
+| `create_document_upload` | `{ "target_organization_id": "UUID", "target_filename": "factura.pdf", "declared_mime": "application/pdf", "declared_bytes": 1048576 }` | Propietario, administrador u operador; valida formato y limites de `DEC-017`. Retorna `document_id` y `storage_path`. |
+| `finalize_document_upload` | `{ "target_document_id": "UUID", "resolved_mime": "application/pdf", "resolved_bytes": 1048576, "resolved_checksum": "SHA256_HEX", "resolved_page_count": 3 }` | Mismo rol; revalida limites y rechaza un checksum ya archivado en la organizacion con `23505`. |
+| `discard_document_upload` | `{ "target_document_id": "UUID" }` | Mismo rol; borra la carga pendiente y retorna la ruta del objeto a eliminar. |
+| `expire_stale_document_uploads` | `{ "target_organization_id": "UUID" }` | Integrante activo; retorna las rutas de las cargas abandonadas hace mas de 30 minutos. |
+| `find_document_by_checksum` | `{ "target_organization_id": "UUID", "target_checksum": "SHA256_HEX" }` | Integrante activo; permite senalar el documento existente ante un duplicado. |
+
+Las lecturas de `documents` y `document_derivatives` usan el mismo patron Data API que las tablas de M2, filtradas por `organization_id` y sujetas a RLS. La subida del archivo no pasa por la aplicacion: se hace con una URL firmada emitida por `createSignedUploadUrl` contra el bucket privado `documents`.
+
 Ejemplo:
 
 ```http
@@ -116,5 +147,7 @@ Estos RPC solo tienen `EXECUTE` para `service_role` y deben invocarse mediante `
 |---|---|---|
 | `delete_organization_as_admin` | `{ "target_organization_id": "UUID", "requesting_user_id": "UUID" }` | PostgreSQL comprueba que el solicitante sea propietario. |
 | `delete_account_as_admin` | `{ "target_user_id": "UUID" }` | Confia en el objetivo pasado por la accion reautenticada y rechaza cuentas con organizaciones propias. |
+| `register_document_derivative` | `{ "target_document_id": "UUID", "target_kind": "thumbnail", "target_storage_path": "...", "target_mime": "image/webp", "target_bytes": 1234 }` | Solo para el documento ya archivado; agregado en la rama de M3. |
+| `set_document_derivative_status` | `{ "target_document_id": "UUID", "next_status": "ready" }` | Marca el resultado de la conversion; agregado en la rama de M3. |
 
 No enviar tokens, secretos, documentos ni respuestas completas de error a logs o herramientas de analitica.

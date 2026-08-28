@@ -10,6 +10,7 @@
 - **Commit base desplegado para M1:** `115cd26228b863e6625dde489c633855c3e63dee`
 - **Commit funcional que cierra M2:** `1e8c18ac2539535d53622aa10a84517b7d996624`
 - **Commit de cierre documental M2 auditado:** `20b174065baf08c7d86185e6f2fce4bbbdc0c4b4`
+- **Rama de la ingesta de M3 en revision:** `feat/m3-document-ingest`, sin mergear
 - **Commit que contiene este snapshot:** el commit documental que contiene este archivo; obtenerlo con `git log -1 --format=%H -- docs/HANDOFF.md`.
 - **Fecha del snapshot:** 2026-08-28
 - **Checkout usado para documentar:** `/home/kara96/code/recia`
@@ -21,7 +22,7 @@ El tag fijo reproduce la demo vanilla. La raiz de `main` contiene desde M1 la ap
 
 RECIA busca convertirse en un SaaS publico para PyMEs argentinas que cargue comprobantes, extraiga datos fiscales, permita revisarlos, archive los originales y exporte CSV/XLSX.
 
-El repositorio contiene Next.js 16, React 19 y TypeScript con Auth, organizaciones multi-tenant, cuatro roles, RLS, pruebas PostgreSQL, CI y despliegue continuo en Vercel. M2 cumple sus criterios de aceptacion y esta cerrado; un gate de endurecimiento pre-M3 debe resolver dos brechas adicionales antes de iniciar el siguiente hito. La pagina publica comunica correctamente que M3 es el proximo hito de producto. El prototipo anterior ya no esta en la raiz y se recupera por tag.
+El repositorio contiene Next.js 16, React 19 y TypeScript con Auth, organizaciones multi-tenant, cuatro roles, RLS, pruebas PostgreSQL, CI y despliegue continuo en Vercel. M2 cumple sus criterios de aceptacion y esta cerrado; un gate de endurecimiento pre-M3 debe resolver dos brechas adicionales antes de mergear el siguiente hito. La ingesta documental de M3 esta implementada y verificada localmente en una rama en revision, sin desplegar ni crear recursos remotos. La pagina publica comunica correctamente que M3 es el proximo hito de producto. El prototipo anterior ya no esta en la raiz y se recupera por tag.
 
 La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabase Auth/PostgreSQL/Storage, organizaciones multi-tenant, RLS, procesamiento OCR asincrono y revision humana.
 
@@ -42,9 +43,9 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 
 - Next.js 16 con App Router y React 19.
 - TypeScript estricto.
-- Pagina responsive de estado hasta M2 sin claims de funciones inexistentes.
+- Pagina responsive de estado que declara M3 en curso, sin claims de funciones inexistentes.
 - ESLint 9 con reglas de Next.js.
-- Seis tests Vitest de pagina y utilidades de contrasena/redirect.
+- Tests Vitest de pagina, utilidades de contrasena/redirect y validacion documental.
 - Scripts de lint, typecheck, test, build y verificacion de aplicacion.
 - GitHub Actions con jobs `verify` y `database`; este CI es informativo y no bloquea Vercel.
 - Supabase Auth con registro inmediato, login, logout y recuperacion de contrasena.
@@ -56,6 +57,17 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 - Eliminacion inmediata y server-only: nombre exacto para organizaciones y reautenticacion adicional para cuentas.
 - Contrato de variables publicas y `SUPABASE_SECRET_KEY` server-only en `.env.example`.
 - Migraciones, configuracion Auth y estrategia de Storage en `supabase/` y `docs/SUPABASE.md`.
+
+En la rama `feat/m3-document-ingest`, implementado y verificado localmente pero sin mergear ni desplegar:
+
+- Tablas `documents` y `document_derivatives` con `organization_id` obligatorio, RLS y escritura unicamente por RPC.
+- Buckets privados `documents` y `document-derivatives` con politicas por organizacion.
+- Carga por URL firmada de subida y validacion server-side sobre los bytes almacenados.
+- Rechazo de formatos ajenos al contrato, discordancia entre extension y contenido, archivos truncados, PDF cifrado y exceso de paginas, bytes o megapixeles.
+- Original inmutable con hash SHA-256, deduplicacion por organizacion y expiracion de cargas abandonadas.
+- Miniatura, conversion HEIC y render de la primera pagina del PDF como derivados best-effort.
+- Descarga del original mediante URL firmada de 60 segundos.
+- 41 assertions pgTAP adicionales y una suite de validacion con un fixture por formato.
 - Node 24.20.0 instalado localmente en WSL y fijado en `.nvmrc`; `package.json` exige Node 24 o superior.
 - Prototipo publicado en el tag `prototype-v0.1.0`.
 - Produccion de Vercel accesible en https://recia.vercel.app.
@@ -66,10 +78,10 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 
 ### No implementado
 
-- Storage privado y preservacion del original.
+- Gate de endurecimiento pre-M3, que precede al merge de la ingesta.
+- Storage privado promovido a un ambiente remoto dedicado.
 - OCR real.
-- PDF y soporte HEIC garantizado.
-- Procesamiento asincrono durable.
+- Procesamiento asincrono durable y cola seleccionada.
 - Exportaciones CSV/XLSX.
 - Auditoria general, backups, observabilidad y rate limiting general.
 - Tests E2E de navegador.
@@ -81,20 +93,25 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 | Archivo | Responsabilidad actual |
 |---|---|
 | `src/app/layout.tsx` | Metadata, idioma y layout raiz. |
-| `src/app/page.tsx` | Pagina publica de estado hasta M2. |
+| `src/app/page.tsx` | Pagina publica de estado hasta M3. |
 | `src/app/(auth)/` | Registro, login y recuperacion de acceso. |
 | `src/app/(app)/` | Onboarding, cuenta, administracion y control de acceso de rutas privadas. |
+| `src/app/(app)/organizations/[organizationId]/documents/` | Archivo documental, carga y acciones de ingesta. |
+| `src/app/api/documents/[documentId]/` | Descarga firmada del original y generacion de derivados. |
+| `src/components/document-uploader.tsx` | Carga directa a Storage con URL firmada y verificacion posterior. |
+| `src/lib/documents/` | Limites de DEC-017, sniffing de formato, inspeccion, hash y derivados. |
 | `src/lib/supabase/` | Clientes Supabase de navegador, SSR y administracion server-only. |
 | `src/proxy.ts` | Renovacion de cookies y sesion Supabase; no decide acceso a rutas privadas. |
 | `src/app/globals.css` | Sistema visual responsive de la pagina inicial. |
 | `src/app/page.test.tsx` | Pruebas de claims y secuencia de hitos. |
-| `supabase/migrations/` | Esquema, RLS, cuotas y funciones transaccionales de M2. |
-| `supabase/tests/database/` | 35 assertions pgTAP de esquema, privilegios, aislamiento, invitaciones, cuotas y borrados. |
+| `scripts/generate-document-fixtures.mjs` | Regeneracion de los fixtures binarios de prueba. |
+| `supabase/migrations/` | Esquema, RLS, cuotas y funciones transaccionales de M2 y M3. |
+| `supabase/tests/database/` | 76 assertions pgTAP de esquema, privilegios, aislamiento, invitaciones, cuotas, borrados e ingesta. |
 | `.github/workflows/ci.yml` | Verificacion de aplicacion y base en GitHub. |
 | `.env.example` | Contrato de variables publicas y secreto server-only de Supabase. |
 | `package.json` | Versiones y comandos del proyecto. |
 | `docs/SUPABASE.md` | Estrategia de ambientes, migraciones, RLS y Storage. |
-| `docs/API.md` | Inventario interno de route handlers, lecturas Data API y RPC de M2. |
+| `docs/API.md` | Inventario interno de route handlers, lecturas Data API y RPC de M2 y M3. |
 | `docs/RELAY_PROMPT.md` | Prompt autocontenido para retomar desde otro equipo. |
 
 ## Como ejecutar y verificar M2
@@ -109,7 +126,7 @@ npx supabase status
 
 Crear `.env.local` con los valores locales impresos por Supabase y ejecutar `npm run dev`. Abrir `http://localhost:3000`; Mailpit esta en `http://localhost:54324`. Node 24, npm `11.19.0` y Docker o runtime compatible son la configuracion reproducible.
 
-La aplicacion necesita `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Las acciones destructivas tambien requieren `SUPABASE_SECRET_KEY` exclusivamente en el servidor.
+La aplicacion necesita `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Las acciones destructivas, y en la rama de M3 tambien la limpieza de objetos rechazados o huerfanos y la escritura de derivados, requieren `SUPABASE_SECRET_KEY` exclusivamente en el servidor.
 
 ```bash
 npm run verify
@@ -119,19 +136,22 @@ npm run db:test
 npm run supabase:stop
 ```
 
-`verify` cubre solamente la aplicacion: lint, typecheck, seis tests Vitest y build. La secuencia Supabase comprueba una base local limpia; `db:reset` borra datos locales. El job `database` de CI ejecuta 35 assertions pgTAP. El 2026-08-28 se observo `npm audit --audit-level=high` con 0 vulnerabilidades, pero audit no forma parte del workflow.
+`verify` cubre solamente la aplicacion: lint, typecheck, tests Vitest y build. La secuencia Supabase comprueba una base local limpia; `db:reset` borra datos locales. El job `database` de CI ejecuta 35 assertions pgTAP en `main` y 76 en la rama de M3. El 2026-08-28 se observo `npm audit --audit-level=high` con 0 vulnerabilidades, pero audit no forma parte del workflow.
+
+La rama `feat/m3-document-ingest` se verifico el 2026-08-28 con Node `24.20.0`, npm `11.19.0`, 32 tests Vitest, 76 assertions pgTAP y build en verde. La ingesta se probo ademas de extremo a extremo contra Supabase local: reserva de carga, subida con URL firmada, coincidencia del hash SHA-256 del original descargado, rechazo de duplicados y negacion de lectura, firma y escritura entre organizaciones. No se creo ningun recurso remoto.
 
 La produccion publica esta disponible en https://recia.vercel.app. El 2026-08-28 se verifico registro con sesion inmediata y respuesta HTTP `200`; la cuenta descartable se elimino despues del smoke test.
 
 ## Flujo actual de usuario
 
-1. La pagina `/` muestra M0, M1 y M2 completados, con M3 como siguiente.
+1. La pagina `/` muestra M0, M1 y M2 completados, con M3 en curso.
 2. Un visitante crea una cuenta y recibe una sesion inmediata, o inicia sesion y puede recuperar su contrasena.
 3. El usuario crea su primera organizacion o acepta un enlace de invitacion bearer.
 4. La organizacion activa queda en `/organizations/[organizationId]`; RLS limita lecturas por membresia y los RPC vuelven a comprobar roles para operaciones privilegiadas.
 5. Propietarios y administradores gestionan equipo e invitaciones segun `DEC-014`.
 6. El propietario puede transferir propiedad o eliminar la organizacion; una cuenta sin organizaciones propias puede eliminarse tras reautenticacion.
-7. Un aviso explicito informa que archivo documental y OCR aun no funcionan.
+7. En la rama de M3, un integrante con rol de carga sube un comprobante en `/organizations/[organizationId]/documents`; el navegador lo envia directo al bucket privado y el servidor lo valida antes de archivarlo, con descarga posterior mediante URL firmada.
+8. Un aviso explicito informa que la extraccion automatica de datos aun no funciona.
 
 ## Contrato y reglas del prototipo historico
 
@@ -233,7 +253,11 @@ Relacion usuario-organizacion y rol: propietario, administrador, operador o solo
 
 ### `documents`
 
-Original, `organization_id`, ruta privada, MIME, bytes, hash, paginas, uploader, estado y timestamps. Todo documento pertenece obligatoriamente a una organizacion.
+Implementada en la rama de M3. Original, `organization_id`, ruta privada, MIME declarado y verificado, bytes, hash, paginas o dimensiones, uploader, estado de carga, estado de derivados y timestamps. Todo documento pertenece obligatoriamente a una organizacion.
+
+### `document_derivatives`
+
+Implementada en la rama de M3. Miniaturas y conversiones asociadas a un documento, en un bucket separado del original, con tipo, ruta, tamano, dimensiones y pagina.
 
 ### `receipt_data`
 
@@ -339,6 +363,7 @@ La fuente completa es [DECISIONS.md](DECISIONS.md). En resumen:
 - Invitaciones bearer de 7 dias limitadas a operador o solo lectura.
 - Propietario unico en el flujo RPC y eliminaciones M2 ejecutadas solo desde servidor.
 - Topes tecnicos antiabuso, con bypass conocido del tope de organizaciones mediante transferencia.
+- Ingesta por URL firmada con verificacion server-side posterior y derivados separados.
 
 ## Decisiones resueltas hasta M2
 
@@ -350,6 +375,7 @@ La fuente completa es [DECISIONS.md](DECISIONS.md). En resumen:
 - `DEC-026`: registro, contrasenas e invitaciones de M2.
 - `DEC-027`: propiedad y eliminacion de identidad/organizaciones.
 - `DEC-028`: topes tecnicos antiabuso.
+- `DEC-029`: contrato de ingesta documental de M3.
 
 ## Decisiones pendientes posteriores
 
@@ -379,12 +405,15 @@ No implementar una decision marcada como pendiente suponiendo una respuesta sile
 12. `SUPABASE_SECRET_KEY` solo esta configurada en Vercel; para probar borrados localmente debe agregarse al entorno server-only sin versionarla.
 13. ESLint esta fijado en 9 por incompatibilidad transitiva con ESLint 10. Las Actions v4 tambien reportan deuda por runtime Node 20 deprecado.
 14. No hay licencia definida.
-15. Uploads, OCR, exportacion, auditoria general y backups siguen sin implementar y no deben simularse.
-16. Los defectos del prototipo (`localStorage`, importes decimales, notas de credito y carrera de captura) permanecen solo en el tag y no deben copiarse.
+15. OCR, exportacion, auditoria general y backups siguen sin implementar y no deben simularse.
+16. En la rama de M3 la generacion de derivados corre sincronica dentro de una funcion de Vercel porque `DEC-016` sigue pendiente. Un HEIC o un PDF pesado puede agotar el tiempo de la funcion; el original queda intacto y el documento marcado como `failed`, listo para reintentar.
+17. La decodificacion de HEIC depende de `libheif` y `libde265` a traves de `heic-convert`. Son componentes LGPL y HEVC tiene consideraciones de patentes: revisar junto con `DEC-024`. Si se quitara la dependencia, el HEIC se sigue subiendo, validando y conservando, y solo su derivado queda sin generar.
+18. En la rama de M3 un archivo invalido se rechaza despues de llegar a Storage, de modo que consume trafico de subida aunque no cuota de OCR.
+19. Los defectos del prototipo (`localStorage`, importes decimales, notas de credito y carrera de captura) permanecen solo en el tag y no deben copiarse.
 
 ## Proxima tarea recomendada
 
-Completar el gate de endurecimiento pre-M3: aplicar el tope de organizaciones durante transferencias, cubrir la creacion privilegiada de organizaciones sin propietario y agregar tests pgTAP negativos. M2 permanece cerrado y no se crean recursos de M3 en esta tarea.
+Completar el gate de endurecimiento pre-M3: aplicar el tope de organizaciones durante transferencias, cubrir la creacion privilegiada de organizaciones sin propietario y agregar tests pgTAP negativos. M2 permanece cerrado y ese gate se entrega por separado, antes de mergear la rama `feat/m3-document-ingest`.
 
 ## Definition of Done de la proxima tarea
 
@@ -423,3 +452,5 @@ Usar [RELAY_PROMPT.md](RELAY_PROMPT.md). Su primera fase es solo de verificacion
 | 2026-08-28 | `c37e878` | Recuperacion de acceso y politica minima de contrasena. |
 | 2026-08-28 | `1e8c18a` | Registro inmediato y eliminacion segura; CI y produccion verificados. |
 | 2026-08-28 | `20b1740` | Cierre documental M2, portada M3 siguiente, CI y Vercel verificados. |
+| 2026-08-28 | `d13445b` | Handoff auditado, superficie HTTP documentada y gate pre-M3 definido. |
+| 2026-08-28 | `feat/m3-document-ingest` | Ingesta documental de M3 implementada y verificada localmente, en revision y sin mergear. |
