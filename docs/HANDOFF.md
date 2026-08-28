@@ -51,8 +51,9 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 - Perfiles, organizaciones, membresias, invitaciones manuales y cuatro roles.
 - Organizaciones creadas por RPC con propietario unico, transferencia atomica y organizacion activa expresada en la URL.
 - RLS y funciones `security definer` endurecidas y cubiertas por tests negativos entre tenants.
+- Invariante de propietario unico verificada tambien ante inserts privilegiados directos en `organizations`.
 - Invitaciones bearer de un solo uso, 7 dias y roles limitados a operador o solo lectura.
-- Tope de 10 organizaciones al crear y 30 invitaciones por organizacion/hora; una transferencia puede superar el primer tope.
+- Tope de 10 organizaciones aplicado al crear y al transferir, y 30 invitaciones por organizacion/hora.
 - Eliminacion inmediata y server-only: nombre exacto para organizaciones y reautenticacion adicional para cuentas.
 - Contrato de variables publicas y `SUPABASE_SECRET_KEY` server-only en `.env.example`.
 - Migraciones, configuracion Auth y estrategia de Storage en `supabase/` y `docs/SUPABASE.md`.
@@ -89,7 +90,7 @@ La arquitectura objetivo aceptada es Next.js + TypeScript en Vercel, con Supabas
 | `src/app/globals.css` | Sistema visual responsive de la pagina inicial. |
 | `src/app/page.test.tsx` | Pruebas de claims y secuencia de hitos. |
 | `supabase/migrations/` | Esquema, RLS, cuotas y funciones transaccionales de M2. |
-| `supabase/tests/database/` | 35 assertions pgTAP de esquema, privilegios, aislamiento, invitaciones, cuotas y borrados. |
+| `supabase/tests/database/` | 44 assertions pgTAP de esquema, privilegios, aislamiento, invitaciones, cuotas, borrados y topes de propiedad. |
 | `.github/workflows/ci.yml` | Verificacion de aplicacion y base en GitHub. |
 | `.env.example` | Contrato de variables publicas y secreto server-only de Supabase. |
 | `package.json` | Versiones y comandos del proyecto. |
@@ -119,7 +120,7 @@ npm run db:test
 npm run supabase:stop
 ```
 
-`verify` cubre solamente la aplicacion: lint, typecheck, seis tests Vitest y build. La secuencia Supabase comprueba una base local limpia; `db:reset` borra datos locales. El job `database` de CI ejecuta 35 assertions pgTAP. El 2026-08-28 se observo `npm audit --audit-level=high` con 0 vulnerabilidades, pero audit no forma parte del workflow.
+`verify` cubre solamente la aplicacion: lint, typecheck, seis tests Vitest y build. La secuencia Supabase comprueba una base local limpia; `db:reset` borra datos locales. El job `database` de CI ejecuta 44 assertions pgTAP. El 2026-08-28 se observo `npm audit --audit-level=high` con 0 vulnerabilidades, pero audit no forma parte del workflow.
 
 La produccion publica esta disponible en https://recia.vercel.app. El 2026-08-28 se verifico registro con sesion inmediata y respuesta HTTP `200`; la cuenta descartable se elimino despues del smoke test.
 
@@ -338,7 +339,7 @@ La fuente completa es [DECISIONS.md](DECISIONS.md). En resumen:
 - Registro inmediato sin confirmacion, recuperacion y contrasena minima reforzada.
 - Invitaciones bearer de 7 dias limitadas a operador o solo lectura.
 - Propietario unico en el flujo RPC y eliminaciones M2 ejecutadas solo desde servidor.
-- Topes tecnicos antiabuso, con bypass conocido del tope de organizaciones mediante transferencia.
+- Topes tecnicos antiabuso aplicados tanto al crear como al transferir organizaciones.
 
 ## Decisiones resueltas hasta M2
 
@@ -365,9 +366,7 @@ No implementar una decision marcada como pendiente suponiendo una respuesta sile
 
 ## Hallazgos y riesgos conocidos
 
-1. `transfer_organization_ownership` no aplica el tope de 10 organizaciones al nuevo propietario; corregir y agregar pgTAP antes de M3.
-2. La invariante de propietario unico no cubre un insert privilegiado directo en `organizations`; prohibir esa ruta y endurecerla antes de M3.
-3. La produccion publica apunta al unico proyecto remoto `recia-dev`; separar ambientes antes de desplegar M3 o crear recursos remotos del hito.
+1. La produccion publica apunta al unico proyecto remoto `recia-dev`; separar ambientes antes de desplegar M3 o crear recursos remotos del hito.
 4. `DEC-021` sigue pendiente y bloquea comprobantes reales aun despues de separar ambientes. Usar solo fixtures ficticios o anonimizados.
 5. El signup tecnico ya es publico sin CAPTCHA, observabilidad ni rate limiting general; M7 agrega controles comerciales y operativos.
 6. Vercel despliega cada push a `main` sin esperar los jobs de CI. `main` no tiene checks requeridos y las migraciones/configuracion remotas se promueven manualmente.
@@ -384,15 +383,14 @@ No implementar una decision marcada como pendiente suponiendo una respuesta sile
 
 ## Proxima tarea recomendada
 
-Completar el gate de endurecimiento pre-M3: aplicar el tope de organizaciones durante transferencias, cubrir la creacion privilegiada de organizaciones sin propietario y agregar tests pgTAP negativos. M2 permanece cerrado y no se crean recursos de M3 en esta tarea.
+Separar el proyecto Supabase que recibira datos reales y consultar el estado remoto enlazado sin aplicar cambios, registrando el ambiente destino. Recien despues corresponde revisar y mergear la ingesta de M3, que ya esta implementada en la rama `feat/m3-document-ingest`. `DEC-021` sigue bloqueando comprobantes reales aun con ambientes separados.
 
 ## Definition of Done de la proxima tarea
 
-- Una transferencia a un usuario con 10 organizaciones falla sin cambiar propietarios ni roles.
-- Inserts privilegiados directos no pueden dejar una organizacion activa sin propietario.
-- pgTAP cubre ambas rutas y mantiene los 35 casos existentes.
-- El estado remoto enlazado se consulta sin aplicar cambios y se registra el ambiente destino.
-- No se crean tablas, buckets ni codigo de M3.
+- Existe un proyecto remoto dedicado, distinto de `recia-dev`, con sus propias claves.
+- Las migraciones de M2 estan promovidas y `supabase migration list --linked` refleja el estado esperado.
+- Vercel apunta al ambiente correcto y ningun secreto queda versionado.
+- `DEC-021` queda resuelta o se documenta explicitamente que solo se usaran fixtures ficticios.
 - Verificacion local, GitHub Actions y deployment de Vercel finalizan correctamente.
 
 ## Como mantener este handoff
@@ -423,3 +421,4 @@ Usar [RELAY_PROMPT.md](RELAY_PROMPT.md). Su primera fase es solo de verificacion
 | 2026-08-28 | `c37e878` | Recuperacion de acceso y politica minima de contrasena. |
 | 2026-08-28 | `1e8c18a` | Registro inmediato y eliminacion segura; CI y produccion verificados. |
 | 2026-08-28 | `20b1740` | Cierre documental M2, portada M3 siguiente, CI y Vercel verificados. |
+| 2026-08-28 | `d13445b` | Handoff auditado, superficie HTTP documentada y gate pre-M3 definido. |
