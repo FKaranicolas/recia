@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(20);
+select plan(19);
 
 insert into auth.users (
   instance_id,
@@ -178,6 +178,11 @@ select lives_ok(
   'a transfer can move a user from nine to ten active owned organizations'
 );
 
+-- Counted with the role reset: this asserts the ownership invariant itself, not
+-- what any particular caller is allowed to see. Under `authenticated` the count
+-- would be filtered by RLS to the organizations the current JWT belongs to.
+reset role;
+
 select is(
   (
     select count(*)
@@ -190,6 +195,7 @@ select is(
   'the accepted boundary transfer leaves the receiver at ten owned organizations'
 );
 
+set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
 select throws_ok(
   $$ select public.create_organization('Una mas') $$,
@@ -303,45 +309,12 @@ select lives_ok(
   'updating a healthy organization revalidates without blocking'
 );
 
-select throws_ok(
-  $$
-    do $test$
-    begin
-      set constraints organizations_require_owner deferred;
-
-      insert into public.organizations (id, name, created_by)
-      values ('f0000000-0000-0000-0000-000000000002', 'Owner removal target', '10000000-0000-0000-0000-000000000001');
-
-      insert into public.organization_members (organization_id, user_id, role, added_by)
-      values ('f0000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'owner', '10000000-0000-0000-0000-000000000001');
-
-      set constraints organizations_require_owner immediate;
-      alter table public.organization_members disable trigger organization_members_require_owner;
-      set constraints organizations_require_owner deferred;
-
-      delete from public.organization_members
-      where organization_id = 'f0000000-0000-0000-0000-000000000002'
-        and user_id = '10000000-0000-0000-0000-000000000001';
-
-      update public.organizations
-      set name = 'Owner removal target updated'
-      where id = 'f0000000-0000-0000-0000-000000000002';
-
-      begin
-        set constraints organizations_require_owner immediate;
-      exception when others then
-        alter table public.organization_members enable trigger organization_members_require_owner;
-        raise;
-      end;
-
-      alter table public.organization_members enable trigger organization_members_require_owner;
-    end
-    $test$
-  $$,
-  '23514',
-  'An organization must have exactly one active owner',
-  'updating an organization rejects removing its only active owner'
-);
+-- Nota: el escenario "quitar al unico propietario es rechazado" no se prueba
+-- aca. Esa ruta la corta `organization_members_require_owner`, el constraint
+-- trigger diferido de M2 sobre `organization_members`, no el trigger nuevo
+-- sobre `organizations`. Para llegar a que el trigger nuevo sea la barrera hay
+-- que deshabilitar el de M2, y Postgres lo prohibe con
+-- `55006: cannot ALTER TABLE ... because it has pending trigger events`.
 
 select * from finish();
 rollback;
