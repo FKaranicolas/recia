@@ -181,7 +181,7 @@ Recibir documentos de forma segura, conservar el original y mantener un estado d
 ### Dependencias
 
 - M2 completado.
-- Gate de endurecimiento pre-M3 completado.
+- Gate de endurecimiento pre-M3 completado en codigo y pruebas.
 - Limites de archivo acordados (`DEC-017`).
 - Ambiente remoto dedicado antes de desplegar M3 o crear sus recursos remotos; el desarrollo local con fixtures puede precederlo.
 - `DEC-021` resuelta antes de almacenar comprobantes reales; mientras siga pendiente, usar solo fixtures ficticios o anonimizados.
@@ -411,4 +411,4 @@ Estas lineas requieren nuevas decisiones y no deben retrasar los criterios de V1
 
 ## Proxima accion
 
-Antes de M3, corregir el bypass del tope de organizaciones por transferencia, cubrir la invariante de propietario ante inserts privilegiados y agregar sus pruebas. Luego separar el proyecto Supabase de produccion y resolver `DEC-021`; hasta entonces, cualquier trabajo de ingesta usara solo fixtures ficticios o anonimizados.
+El gate de endurecimiento pre-M3 esta cubierto: el tope de organizaciones se aplica tambien en transferencias y la invariante de propietario resiste inserts privilegiados, con pgTAP para ambas rutas. Resta separar el proyecto Supabase de produccion y resolver `DEC-021`; hasta entonces, cualquier trabajo de ingesta usara solo fixtures ficticios o anonimizados.

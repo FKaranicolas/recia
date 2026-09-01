@@ -19,17 +19,16 @@ M1 y M2 incorporan:
 - Supabase Auth con registro inmediato, login, logout y recuperacion de contrasena.
 - Organizaciones creadas por RPC con propietario unico, cuatro roles y seleccion activa por URL.
 - Invitaciones bearer manuales de 7 dias para operador o solo lectura.
-- RLS y RPC protegidas, con 35 assertions PostgreSQL de esquema, aislamiento, permisos y cuotas.
+- RLS y RPC protegidas, con 44 assertions PostgreSQL de esquema, aislamiento, permisos y cuotas.
+- Tope de 10 organizaciones aplicado tanto al crear como al transferir, e invariante de propietario unico tambien frente a inserts privilegiados.
 - Eliminacion inmediata y server-only: la organizacion exige su nombre exacto y la cuenta tambien reautenticacion.
 
 Limitaciones conocidas antes de M3:
 
-- El tope de 10 organizaciones se aplica al crearlas, pero una transferencia puede superarlo.
-- La invariante de propietario unico depende del RPC de creacion y de no insertar organizaciones directamente con privilegios.
 - La produccion publica usa transitoriamente el proyecto remoto `recia-dev`.
 - `DEC-021` bloquea comprobantes reales hasta definir retencion, borrado y backups.
 
-M3 sigue siendo el proximo hito de producto, pero el gate operativo inmediato es corregir las dos brechas de organizaciones anteriores y ampliar pgTAP sin crear recursos de M3.
+M3 sigue siendo el proximo hito de producto. El gate de endurecimiento pre-M3 esta cubierto en codigo y pruebas; resta separar el ambiente remoto y resolver `DEC-021`.
 
 Todavia no estan implementados:
 
