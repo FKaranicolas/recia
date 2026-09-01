@@ -76,23 +76,32 @@ Fecha del registro inicial: 2026-08-26.
 
 ### DEC-007 - Formatos y conservacion del original
 
-- **Estado:** Aceptada.
+- **Estado:** Reemplazada por `DEC-029` el 2026-09-01.
 - **Fecha:** 2026-08-26.
 - **Contexto:** Las PyMEs reciben facturas digitales y tambien toman fotografias.
 - **Decision:** V1 aceptara PDF, JPG, PNG y HEIC. El original sera inmutable y privado; previews y conversiones se almacenaran por separado.
 - **Consecuencias:** Se requieren validacion server-side, hash, metadata, conversion segura y soporte multipagina.
 - **Alternativas:** Solo imagenes o conservar unicamente la version comprimida.
-- **Revision futura:** Revisar formatos adicionales a partir del uso real.
+- **Motivo del reemplazo:** `DEC-029` decide que RECIA no conserva el original ni
+  sus derivados. Cae toda la mitad de conservacion de esta decision: original
+  inmutable, previews y conversiones almacenadas por separado. La lista de
+  formatos aceptados (PDF, JPG, PNG, HEIC) sigue vigente y se aplica desde
+  `DEC-017`, junto con la validacion server-side.
 
 ### DEC-008 - Modelo de procesamiento
 
-- **Estado:** Aceptada.
+- **Estado:** Reemplazada por `DEC-029` el 2026-09-01.
 - **Fecha:** 2026-08-26.
 - **Contexto:** OCR puede tardar, fallar y superar el ciclo de una solicitud web.
 - **Decision:** El procesamiento sera asincrono, con estados persistidos, reintentos, timeout e idempotencia.
 - **Consecuencias:** El documento se guarda antes de procesarlo; los jobs deben poder reanudarse sin duplicar registros o costos.
 - **Alternativas:** Procesamiento exclusivamente sincrono desde una funcion web.
-- **Revision futura:** Revisar proveedor de cola y concurrencia segun volumen.
+- **Motivo del reemplazo:** El procesamiento asincrono exige persistir el archivo
+  entre la peticion y el worker. `DEC-029` lo prohibe, de modo que el
+  procesamiento pasa a ser sincronico y en memoria dentro de la peticion. Los
+  estados persistidos, reintentos e idempotencia sobre documentos dejan de tener
+  objeto. Si M4 necesita trabajo diferido sobre datos ya extraidos, es una
+  decision nueva, no la reapertura de esta.
 
 ### DEC-009 - Seleccion del OCR
 
@@ -188,6 +197,12 @@ Fecha del registro inicial: 2026-08-26.
 - **Decision:** Aceptar JPG, PNG y HEIC de hasta 10 MB y 40 megapixeles; aceptar PDF de hasta 20 MB y 10 paginas. Validar magic bytes, MIME, dimensiones y paginas en servidor antes de encolar OCR. Rechazar PDF cifrado o con contrasena, SVG, archivos activos, corruptos y formatos no permitidos. Conservar el original inmutable; conversion HEIC, rasterizacion PDF, remocion de metadata y miniaturas son derivados separados.
 - **Consecuencias:** Los limites se aplican en cliente por UX, en API por seguridad y en Storage cuando sea posible. Un archivo rechazado no consume cuota OCR. La cantidad de paginas procesadas cuenta para uso y costo.
 - **Alternativas:** Limites unicos o limites diferenciados por plan/formato.
+- **Enmendada por `DEC-029` el 2026-09-01:** queda sin efecto la clausula final
+  "Conservar el original inmutable; conversion HEIC, rasterizacion PDF, remocion
+  de metadata y miniaturas son derivados separados", porque RECIA ya no conserva
+  originales ni derivados. Todo el resto sigue vigente y es la base del
+  procesamiento: formatos aceptados, topes de bytes, paginas y pixeles, y
+  validacion server-side por magic bytes antes de procesar.
 - **Revision futura:** Ajustar por telemetria y costos; cualquier aumento requiere revisar protecciones de abuso.
 
 ### DEC-018 - Esquema fiscal y duplicados
@@ -340,9 +355,21 @@ Fecha del registro inicial: 2026-08-26.
 - **Alternativas:** Conservar el original con retencion configurable por
   organizacion; conservar solo un hash para deduplicacion; delegar la
   conservacion a un almacenamiento del cliente.
+- **Decisiones que reemplaza:** `DEC-007` (formatos y conservacion del original)
+  y `DEC-008` (modelo de procesamiento asincrono). Enmienda ademas `DEC-017`,
+  cuya clausula de conservacion del original y derivados queda sin efecto
+  mientras el resto de sus limites y validaciones sigue vigente.
 - **Revision futura:** Reabrir si aparece un requisito fiscal o contractual de
   conservacion, o si la deduplicacion por contenido se vuelve necesaria.
 
 ## Decisiones reemplazadas
 
-No hay decisiones reemplazadas en este snapshot.
+Se conservan en su posicion original con estado `Reemplazada` y el motivo del
+reemplazo, para no romper los identificadores ni los enlaces existentes.
+
+- `DEC-007` - Formatos y conservacion del original. Reemplazada por `DEC-029` el
+  2026-09-01. Cae la conservacion del original y de los derivados; la lista de
+  formatos aceptados sigue vigente desde `DEC-017`.
+- `DEC-008` - Modelo de procesamiento. Reemplazada por `DEC-029` el 2026-09-01.
+  El procesamiento asincrono exige persistir el archivo entre la peticion y el
+  worker, cosa que `DEC-029` prohibe.
