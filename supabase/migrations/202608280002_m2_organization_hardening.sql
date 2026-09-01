@@ -60,14 +60,25 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  active_owners integer;
 begin
   if not exists (
     select 1
-    from public.organization_members as member
-    where member.organization_id = new.id
-      and member.role = 'owner'
-      and member.status = 'active'
+    from public.organizations as organization
+    where organization.id = new.id
   ) then
+    return null;
+  end if;
+
+  select count(*)
+  into active_owners
+  from public.organization_members as member
+  where member.organization_id = new.id
+    and member.role = 'owner'
+    and member.status = 'active';
+
+  if active_owners <> 1 then
     raise exception 'An organization must have exactly one active owner'
       using errcode = '23514';
   end if;
@@ -81,6 +92,37 @@ revoke all on function app_private.enforce_organization_has_owner() from public;
 -- Deferred so `create_organization` can insert the organization and its owner
 -- membership in one transaction, while a bare insert still fails at commit.
 create constraint trigger organizations_require_owner
-after insert on public.organizations
+after insert or update on public.organizations
 deferrable initially deferred
 for each row execute function app_private.enforce_organization_has_owner();
+
+do $$
+declare
+  invalid_organization_ids text;
+begin
+  select string_agg(organization_owner_counts.organization_id::text, ', ' order by organization_owner_counts.organization_id::text)
+  into invalid_organization_ids
+  from (
+    select
+      organization.id as organization_id,
+      count(member.organization_id) filter (
+        where member.role = 'owner'
+          and member.status = 'active'
+      ) as active_owner_count
+    from public.organizations as organization
+    left join public.organization_members as member
+      on member.organization_id = organization.id
+    group by organization.id
+    having count(member.organization_id) filter (
+      where member.role = 'owner'
+        and member.status = 'active'
+    ) <> 1
+  ) as organization_owner_counts;
+
+  if invalid_organization_ids is not null then
+    raise exception 'Existing organizations must have exactly one active owner'
+      using errcode = '23514',
+        detail = invalid_organization_ids;
+  end if;
+end;
+$$;
