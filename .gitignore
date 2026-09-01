@@ -20,3 +20,6 @@
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+# Local Pi runtime state
+.atl/
+.pi/

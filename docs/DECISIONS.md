@@ -300,6 +300,49 @@ Fecha del registro inicial: 2026-08-26.
 - **Alternativas:** Limites solo en Next.js, rate limiting externo o ausencia de topes hasta M7.
 - **Revision futura:** Ajustar junto con planes, telemetria y costos operativos.
 
+### DEC-029 - RECIA no almacena comprobantes: procesa y descarta
+
+- **Estado:** Aceptada.
+- **Fecha:** 2026-08-31.
+- **Contexto:** El diseno original de M3 conserva el original subido en un bucket
+  y sus derivados en otro, con la conservacion del original como pilar de
+  producto. Esa conservacion es la fuente de `DEC-021` (retencion, borrado y
+  backups de comprobantes reales), que hoy bloquea M3 y M4, y es tambien la
+  razon por la que el ambiente remoto compartido con produccion es un
+  bloqueante duro.
+- **Decision:** RECIA no persiste comprobantes. El archivo subido se valida y se
+  procesa en memoria en el servidor y se descarta al terminar la peticion. Solo
+  se persisten los datos fiscales extraidos. No se guardan originales,
+  derivados, miniaturas, ni el checksum del contenido.
+- **Consecuencias:**
+  - Se elimina la mitad de almacenamiento de M3: los buckets `documents` y
+    `document-derivatives`, `public.documents` con `storage_path`,
+    `public.document_derivatives`, el ciclo
+    `create_document_upload -> finalize_document_upload -> discard/expire` y las
+    policies sobre `storage.objects`.
+  - Se conserva el procesamiento: `src/lib/documents/` (`inspect`, `limits`,
+    `signature`, `derivatives`, `checksum`, `messages`) son funciones puras
+    sobre bytes, sin dependencia de Supabase.
+  - Sin checksum persistido no hay deduplicacion por contenido ni
+    `find_document_by_checksum`. Subir dos veces el mismo comprobante produce
+    dos extracciones. Si la deduplicacion se vuelve necesaria, exige reabrir
+    esta decision.
+  - Sin original conservado, RECIA deja de ser archivo documental y pasa a ser
+    herramienta de extraccion. La conservacion del comprobante y su respaldo
+    ante ARCA quedan del lado de la PyME. Hay que reescribir el pilar
+    "conservacion del original" en `CLAUDE.md`, `README.md` y `docs/ROADMAP.md`.
+  - `DEC-021` se reduce drasticamente: sin persistencia de comprobantes no hay
+    politica de retencion, borrado ni backup que definir sobre ellos. Queda
+    acotada a los datos extraidos.
+  - M3 pierde su entregable propio: la extraccion es M4, asi que hasta que M4
+    exista no hay dato que persistir y la ingesta no tiene salida visible. El
+    orden `M3 -> M4` del roadmap debe revisarse.
+- **Alternativas:** Conservar el original con retencion configurable por
+  organizacion; conservar solo un hash para deduplicacion; delegar la
+  conservacion a un almacenamiento del cliente.
+- **Revision futura:** Reabrir si aparece un requisito fiscal o contractual de
+  conservacion, o si la deduplicacion por contenido se vuelve necesaria.
+
 ## Decisiones reemplazadas
 
 No hay decisiones reemplazadas en este snapshot.

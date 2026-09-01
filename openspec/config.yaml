@@ -1,0 +1,61 @@
+strict_tdd: true
+context: |
+  recia is a Node.js/TypeScript ESM, React, Next.js project.
+  Detected markers: package.json, tsconfig.json, npm package manager, GitHub Actions.
+  Package managers: npm.
+  Additional evidence: Test-like files detected (4); examples: src\app\page.test.tsx, src\lib\navigation.test.ts, src\lib\password.test.ts, supabase\tests\database\m2_rls.test.sql.
+  Primary test command: npm test.
+  Unit tests: Vitest (npm test).
+  Integration tests: Testing Library (npm test).
+  E2E tests: none.
+rules:
+  proposal:
+    require_problem_statement: true
+  spec:
+    require_acceptance_criteria: true
+  design:
+    require_tradeoffs: true
+  tasks:
+    protect_review_workload: true
+  apply:
+    test_command: "npm test"
+  verify:
+    test_command: "npm test"
+testing:
+  detected: "2026-08-31"
+  runner:
+    command: "npm test"
+    framework: "Vitest"
+  layers:
+    unit: "Vitest"
+    integration: "Testing Library"
+    e2e: ""
+  commands:
+    unit:
+      - scope: "."
+        command: "npm test"
+        framework: "Vitest"
+    integration:
+      - scope: "."
+        command: "npm test"
+        framework: "Testing Library"
+    e2e:
+      []
+  coverage:
+    command: ""
+    commands:
+      []
+quality:
+  lint: "npm run lint"
+  lint_commands:
+    - scope: "."
+      command: "npm run lint"
+      framework: "linter"
+  typecheck: "npm run typecheck"
+  typecheck_commands:
+    - scope: "."
+      command: "npm run typecheck"
+      framework: "type checker"
+  format: ""
+  format_commands:
+    []
